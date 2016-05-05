@@ -1,0 +1,64 @@
+# Image: https://adafruit-download.s3.amazonaws.com/2016-03-25_Jessie_Lite_PiTFT35r.zip
+# (from: https://learn.adafruit.com/adafruit-pitft-3-dot-5-touch-screen-for-raspberry-pi/easy-install)
+
+0 - ssh pi@IP
+      - sudo su -
+      - passwd
+      - useradd -m -G users jaruiz
+      - passwd jaruiz
+      - nano /etc/sudoers
+      - mkdir /datos &&  chown jaruiz:users /datos -R
+
+      - raspi-config
+         - expand FS
+         - enable camera, i2c, spi, etc...
+         - update raspi-config tool
+
+      REBOOT
+
+      - # ssh and sudo su -
+      - apt-get update && apt-get -y dist-upgrade && apt-get -y upgrade
+      - apt-get install python-qt4 python-qt4-gl python-qt4-phonon python-qt4-sql python-kde4-dev python-pyface lightdm lxde p7zip-full arduino python python-serial zip unrar-free python-dev python-setuptools htop git mlocate pyqt4-dev-tools
+      - apt-get autoremove
+      - apt-get upgrade
+      - nano /etc/group # (add jaruiz to relevant groups)
+
+      - su - jaruiz
+         - mkdir .ssh && nano .ssh/authorized_keys  # (paste local id_rsa.pub)
+         - chmod 600 .ssh/authorized_keys && chmod 700 .ssh
+
+
+
+
+
+
+
+# as user JARUIZ
+
+$ git clone git://github.com/amperka/ino.git
+$ cd ino
+$ sudo python setup.py install
+$ cd ..
+$ sudo rm -rf ino
+$ nano ~/.inorc
+
+[build]
+board-model = nano328
+
+[upload]
+board-model = nano328
+serial-port = /dev/ttyUSB0
+
+[serial]
+serial-port = /dev/ttyUSB0
+
+
+$ git clone https://github.com/javirugo/telemetry.git
+$ cd telemetry/arduino
+$ ./install_makefile.sh
+
+
+
+
+
+
