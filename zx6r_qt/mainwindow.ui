@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>481</width>
+    <height>322</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ZX6R</string>
+  </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow { width: 468px; height: 218px; }
+
+#centralwidget { background-color: black; color: white; }
+
+QWidget { background-color: #262424; color: white; font-size: 14px; }
+
+QPushButton { background-color: black; color: white; border: 1px solid #4A4646; }
+
+QTabBar::tab { min-width: 75px; font-weight: normal; color: #DC3434; padding: 10px 20px; border: 0; background-color: black; }
+
+QTabBar::tab:selected { font-weight: bold; background-color: #4A585D; color: #85F187; }
+
+QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: #3E3E3E;}
+
+#labelCurrentLapTime, #labelBestLapTime, #labelLastLapTime { font-size: 50px; }
+
+#labelCurrentLapTime {color: #95FAFF; }
+#labelBestLapTime {color: #24A523; }
+#labelLastLapTime {color: #9098A9; }
+
+#tabStatus QLabel { padding: 8px 2px;  qproperty-alignment: AlignCenter; background-color: black; }</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabMedia">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>3</number>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <widget class="QWidget" name="tabActions">
+       <attribute name="title">
+        <string>Actions</string>
+       </attribute>
+       <widget class="QPushButton" name="pbRecord">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>191</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Record</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pbQuit">
+        <property name="geometry">
+         <rect>
+          <x>310</x>
+          <y>210</y>
+          <width>141</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Quit</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabStatus">
+       <attribute name="title">
+        <string>Status</string>
+       </attribute>
+       <widget class="QLabel" name="labelStatusCamera">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>141</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>MEDIA</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelStatusGPS">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>141</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>GPS</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelStatusGyroscope">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>110</y>
+          <width>141</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>GYROSCOPE</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelStatusAccelerometer">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>150</y>
+          <width>141</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>ACCELEROMETER</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelStatusKDS">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>190</y>
+          <width>141</width>
+          <height>36</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>KDS</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabTiming">
+       <attribute name="title">
+        <string>Lap Timer</string>
+       </attribute>
+       <widget class="QLabel" name="labelCurrentLap">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>40</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Current Lap:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelCurrentLapTime">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>30</y>
+          <width>301</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>03:88:456</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelLastLap">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>120</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Last:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelLastLapTime">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>110</y>
+          <width>301</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>03:88:456</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelBestLapTime">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>190</y>
+          <width>301</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>03:88:456</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="labelBestLap">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>200</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Best:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Media</string>
+       </attribute>
+       <widget class="QWidget" name="widgetPlayer" native="true">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>0</y>
+          <width>351</width>
+          <height>261</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QListView" name="lvMediaList">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>111</width>
+          <height>261</height>
+         </rect>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="movement">
+         <enum>QListView::Free</enum>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionQuit</sender>
+   <signal>activated()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbQuit</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>82</x>
+     <y>195</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>332</x>
+     <y>181</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
