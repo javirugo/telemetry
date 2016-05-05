@@ -13,19 +13,22 @@ with open('ALMERIA.json') as track_file:
 START_POLY = Polygon([
     (track_data["START"]["lat1"], track_data["START"]["lon1"]),
     (track_data["START"]["lat2"], track_data["START"]["lon2"]),
-    (track_data["START"]["lat3"], track_data["START"]["lon3"])
+    (track_data["START"]["lat3"], track_data["START"]["lon3"]),
+    (track_data["START"]["lat4"], track_data["START"]["lon4"])
 ])
 
 SECTOR2_POLY = Polygon([
     (track_data["SECTOR2"]["lat1"], track_data["SECTOR2"]["lon1"]),
     (track_data["SECTOR2"]["lat2"], track_data["SECTOR2"]["lon2"]),
-    (track_data["SECTOR2"]["lat3"], track_data["SECTOR2"]["lon3"])
+    (track_data["SECTOR2"]["lat3"], track_data["SECTOR2"]["lon3"]),
+    (track_data["SECTOR2"]["lat4"], track_data["SECTOR2"]["lon4"])
 ])
 
 SECTOR3_POLY = Polygon([
     (track_data["SECTOR3"]["lat1"], track_data["SECTOR3"]["lon1"]),
     (track_data["SECTOR3"]["lat2"], track_data["SECTOR3"]["lon2"]),
-    (track_data["SECTOR3"]["lat3"], track_data["SECTOR3"]["lon3"])
+    (track_data["SECTOR3"]["lat3"], track_data["SECTOR3"]["lon3"]),
+    (track_data["SECTOR3"]["lat4"], track_data["SECTOR3"]["lon4"])
 ])
 
 metricsSource = Metrics()
@@ -85,7 +88,7 @@ while True:
     else:
         inside_poly = False
 
-    if len(LAPS) > 10:
+    if len(LAPS) > 5:
       break
 
 lap_no = 1
