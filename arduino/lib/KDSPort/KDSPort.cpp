@@ -248,7 +248,7 @@ void KDSPort::loop()
          return;
       }
 
-      delay(80);
+      delay(60);
 
       // Speed
       for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
@@ -268,7 +268,7 @@ void KDSPort::loop()
          return;
       }
 
-      delay(80);
+      delay(60);
 
       /*
       // Throttle
