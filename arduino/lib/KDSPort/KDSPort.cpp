@@ -153,6 +153,9 @@ uint8_t KDSPort::calcChecksum(uint8_t *data, uint8_t len) {
 
 void KDSPort::setup()
 {
+   this->kph = 0;
+   this->rpms = 0;
+
    pinMode(this->_pinTX, OUTPUT);
    pinMode(this->_pinRX, INPUT);
    
@@ -243,7 +246,6 @@ void KDSPort::loop()
       }
       else if (respSize == 0)
       {
-         this->rpms = 0;
          this->ECUconnected = false;
          return;
       }
@@ -263,7 +265,6 @@ void KDSPort::loop()
       }
       else if (respSize == 0)
       {
-         this->kph = 0;
          this->ECUconnected = false;
          return;
       }
