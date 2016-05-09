@@ -54,6 +54,7 @@ def start_recording():
    blink_thread.running = False
    blink_thread.join()
    GPIO.output(LED_RED, GPIO.HIGH)
+   GPIO.output(LED_GREEN, GPIO.LOW)
    while True:
       input_state = GPIO.input(BUTTON)
       if input_state == False:
@@ -89,6 +90,7 @@ def stop_recording():
    blink_thread.running = False
    blink_thread.join()
    GPIO.output(LED_GREEN, GPIO.HIGH)
+   GPIO.output(LED_RED, GPIO.LOW)
 
 
 try:
