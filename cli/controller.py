@@ -104,5 +104,7 @@ try:
 except (KeyboardInterrupt, SystemExit):
    kds_thread.running = False
    gps_thread.running = False
+   GPIO.output(LED_GREEN, GPIO.LOW)
+   GPIO.output(LED_RED, GPIO.LOW)
    print "Exiting!"
 
