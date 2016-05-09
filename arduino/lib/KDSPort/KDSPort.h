@@ -10,7 +10,7 @@ class KDSPort
    private:
       uint8_t _pinTX;
       uint8_t _pinRX;
-      const uint32_t ISORequestDelay = 40; // Time between requests.
+      const uint32_t ISORequestDelay = 55; // Time between requests.
       const uint32_t ISORequestByteDelay = 10;
 
       const uint8_t ECUaddr = 0x11;

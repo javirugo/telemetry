@@ -250,7 +250,7 @@ void KDSPort::loop()
          return;
       }
 
-      delay(60);
+      delay(this->ISORequestDelay);
 
       // Speed
       for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
@@ -269,7 +269,7 @@ void KDSPort::loop()
          return;
       }
 
-      delay(60);
+      delay(this->ISORequestDelay);
 
       /*
       // Throttle
