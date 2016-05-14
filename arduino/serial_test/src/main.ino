@@ -1,11 +1,9 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial mySerial(10, 11); // RX, TX
+SoftwareSerial mySerial(11, 10); // RX, TX
 
 void setup() {
 
-   pinMode(10, INPUT);
-   pinMode(11, OUTPUT);
    Serial.begin(115200);
    mySerial.begin(115200);
 }

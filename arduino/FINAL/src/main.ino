@@ -5,9 +5,7 @@
 #include "Wire.h"
 
 KDSPort KDSThread(1, 0);
-SoftwareSerial SoftSer(11,10); // RX, TX
-uint32_t rpms = 0;
-uint32_t kph = 0;
+SoftwareSerial SoftSer(11, 10); // RX, TX
 
 MPU6050 accelgyro; //MPU6050 accelgyro(0x69); // <-- use for AD0 high
 int16_t ax, ay, az, gx, gy, gz, degrees_x, gforce; // MP6050
