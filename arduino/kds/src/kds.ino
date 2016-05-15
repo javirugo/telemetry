@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial SoftSer(11,10); // RX, TX
+SoftwareSerial SoftSer(11, 10); // RX, TX
 
 #define K_OUT 1 // K Output Line - TX on Arduino
 #define K_IN 0 // K Input Line - RX on Arduino
@@ -74,7 +74,7 @@ void loop() {
      ECUconnected = false;
      break;
    }
-   delay(50);
+   delay(ISORequestDelay);
 
     // Speed
    for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
@@ -92,7 +92,7 @@ void loop() {
      ECUconnected = false;
      break;
    }
-   delay(50);
+   delay(ISORequestDelay);
 
 
    /*
@@ -115,7 +115,7 @@ void loop() {
      ECUconnected = false;
      break;
    }
-   delay(50);
+   delay(ISORequestDelay);
    */
 
     // PRINT on usb serial

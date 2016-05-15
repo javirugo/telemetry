@@ -9,6 +9,13 @@ KDSPort::KDSPort(uint8_t pinTX, uint8_t pinRX)
 }
 
 
+uint32_t KDSPort::getRPM() { return this->rpms; }
+
+uint32_t KDSPort::getKPH() { return this->kph; }
+
+int KDSPort::getGear() { return this->gear; }
+
+
 uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t reqLen, uint8_t maxLen)
 {
   uint8_t buf[16], rbuf[16];
@@ -246,66 +253,56 @@ void KDSPort::loop()
       }
       else if (respSize == 0)
       {
+         this->rpms = 0;
          this->ECUconnected = false;
          return;
       }
 
-      delay(this->ISORequestDelay);
+      if (this->gearCounter == 3)
+      {
+         // Gear
+         delay(this->ISORequestDelay + 5);
+	      for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
+	      cmdBuf[1] = 0x0B;
+	      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
 
+	      if (respSize == 3)
+	      {
+            this->gear = respBuf[2];
+         }
+         else
+         {
+            this->gear = 0;
+            this->ECUconnected = false;
+            return;
+         }
+
+         this->gearCounter = 0;
+         delay(this->ISORequestDelay);
+      }
+      else
+      {
+         delay(this->ISORequestDelay);
+         this->gearCounter++;
+      }
+
+      /*
       // Speed
       for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
-
-      // Request Speed is register: 0x0C
       cmdBuf[1] = 0x0C;
       respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
       if (respSize == 4) {
-         // NOTE: Actual MPH is this value halved, but we want to
-         // keep full available resolution
+         // Formula for Kms/h from response
          this->kph = ((respBuf[2] << 8) + respBuf[3]) / 2;
+         delay(this->ISORequestDelay);
       }
       else if (respSize == 0)
       {
+         this->kph = 0;
          this->ECUconnected = false;
          return;
       }
-
-      delay(this->ISORequestDelay);
-
-      /*
-      // Throttle
-      for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
-
-      // Request Throttle is register: 0x04
-      cmdBuf[1] = 0x04;
-      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
-      if (respSize == 4) {
-         // NOTE: Actual MPH is this value halved, but we want to
-         // keep full available resolution
-         this->this->kph = (respBuf[2] << 8) + respBuf[3];
-
-         // PRINT on usb serial
-         SoftSer..print("MPH: ");
-         SoftSer..print(this->this->kph);
-      }
-      else if (respSize == 0)
-      {
-         this->ECUconnected = false;
-         break;
-      }
-
       */
    }
-}
-
-
-uint32_t KDSPort::getRPM()
-{
-   return this->rpms;
-}
-
-
-uint32_t KDSPort::getKPH()
-{
-   return this->kph;
 }
 

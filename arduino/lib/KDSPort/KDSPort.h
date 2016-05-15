@@ -10,7 +10,7 @@ class KDSPort
    private:
       uint8_t _pinTX;
       uint8_t _pinRX;
-      const uint32_t ISORequestDelay = 55; // Time between requests.
+      const uint32_t ISORequestDelay = 50; // Time between requests.
       const uint32_t ISORequestByteDelay = 10;
 
       const uint8_t ECUaddr = 0x11;
@@ -20,6 +20,8 @@ class KDSPort
       bool ECUconnected = false;
       uint32_t rpms = 0;
       uint32_t kph = 0;
+      int gear = 0;
+      int gearCounter = 0;
 
       uint8_t sendRequest(const uint8_t *request, uint8_t *response, uint8_t reqLen, uint8_t maxLen);
       uint8_t calcChecksum(uint8_t *data, uint8_t len);
@@ -33,6 +35,7 @@ class KDSPort
 
       uint32_t getRPM();
       uint32_t getKPH();
+      int getGear();
 };
 
 #endif KDSPORT_h

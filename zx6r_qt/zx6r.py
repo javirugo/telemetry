@@ -5,7 +5,7 @@ import glob
 
 from PyQt4 import QtGui, QtCore
 import mainwindow
-from threads import KDSThread, GPSThread
+from threads import KDSThread, GPSThread, MPU6050Thread
 
 settings = {
   "start_raspi": "/picam/start.sh",
@@ -25,6 +25,7 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.setupUi(self)
 
       self.ui.pbRecord.clicked.connect(self.switchRecording)
+      self.ui.pbReboot.clicked.connect(self.reboot)
       self.ui.tabMedia.currentChanged.connect(self.changedSelectedTab)
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.lvMediaList.doubleClicked.connect(self.playVideo)
@@ -35,6 +36,8 @@ class MainWindow(QtGui.QMainWindow):
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
+      self.MPU6050Thread = MPU6050Thread()
+      self.connect( self.MPU6050Thread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateMPU6050 )
       
       self.latitude = 0
       self.longitude = 0
@@ -45,16 +48,24 @@ class MainWindow(QtGui.QMainWindow):
       self.gforce = 0
 
 
+   def reboot(self):
+      os.system("sudo reboot")
+
+
    def pollMetrics(self, running = True):
       if running:
-         if not self.KDSThread.isRunning():
-            self.KDSThread.start()
+         #if not self.KDSThread.isRunning():
+         #   self.KDSThread.start()
+
+         if not self.MPU6050Thread.isRunning():
+            self.MPU6050Thread.start()
 
          if not self.GPSThread.isRunning():
             self.GPSThread.start()
       else:
-         self.KDSThread.stop()
+         #self.KDSThread.stop()
          self.GPSThread.stop()
+         self.MPU6050Thread.stop()
 
 
    def liveLaptimerSwitch(self, checked):
@@ -70,7 +81,6 @@ class MainWindow(QtGui.QMainWindow):
 
 
    def updateKDS(self, data):
-      print data
       self.rpm = data["rpm"]
       self.kph = data["kph"]
       self.lean = data["lean"]
@@ -92,6 +102,14 @@ class MainWindow(QtGui.QMainWindow):
       if self.ui.radioLiveStatus.isChecked():
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
+
+   def updateMPU6050(self, data):
+      #print data
+      self.lean = data["lean"]
+      self.gforce = data["gforce"]
+
+      if self.ui.radioLiveStatus.isChecked():
+         self.ui.labelStatus_gyros.setText(str(self.lean))
 
 
    def startRecording(self):

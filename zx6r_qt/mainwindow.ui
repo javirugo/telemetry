@@ -53,7 +53,7 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -78,7 +78,7 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
          <string>Record</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pbQuit">
+       <widget class="QPushButton" name="pbReboot">
         <property name="geometry">
          <rect>
           <x>310</x>
@@ -88,7 +88,7 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
          </rect>
         </property>
         <property name="text">
-         <string>Quit</string>
+         <string>Reboot</string>
         </property>
        </widget>
       </widget>
@@ -426,22 +426,6 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pbQuit</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>82</x>
-     <y>195</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>332</x>
-     <y>181</y>
     </hint>
    </hints>
   </connection>

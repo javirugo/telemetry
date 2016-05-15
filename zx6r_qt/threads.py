@@ -1,7 +1,11 @@
 
 import serial
+import smbus
+import math
+import time
 from gps import *
 from PyQt4 import QtCore
+
 
 class KDSThread(QtCore.QThread):
    def __init__(self):
@@ -17,11 +21,11 @@ class KDSThread(QtCore.QThread):
       gforce = 0
 
       self.serialKDS = serial.Serial(
-         port='/dev/ttyUSB0',\
-         baudrate=19200,\
-         parity=serial.PARITY_NONE,\
-         stopbits=serial.STOPBITS_ONE,\
-         bytesize=serial.EIGHTBITS,\
+         port='/dev/ttyUSB0',
+         baudrate=19200,
+         parity=serial.PARITY_NONE,
+         stopbits=serial.STOPBITS_ONE,
+         bytesize=serial.EIGHTBITS,
          timeout=None)
 
       while True:
@@ -38,7 +42,6 @@ class KDSThread(QtCore.QThread):
 
    def stop(self):
       self.stopped = 1
-
 
    def isRunning(self):
       return self.stopped == 0
@@ -70,10 +73,71 @@ class GPSThread(QtCore.QThread):
 
          self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
-
    def stop(self):
       self.stopped = 1
 
+   def isRunning(self):
+      return self.stopped == 0
+
+
+class MPU6050Thread(QtCore.QThread):
+   def __init__(self):
+      QtCore.QThread.__init__(self)
+      self.stopped = 1
+      self.bus = smbus.SMBus(1)
+      self.MUP6050_address = 0x68
+
+
+   def read_byte(self, adr):
+       return bus.read_byte_data(self.MUP6050_address, adr)
+
+   def read_word(self, adr):
+       high = self.bus.read_byte_data(self.MUP6050_address, adr)
+       low = self.bus.read_byte_data(self.MUP6050_address, adr+1)
+       val = (high << 8) + low
+       return val
+
+   def read_word_2c(self, adr):
+       val = self.read_word(adr)
+       if (val >= 0x8000):
+           return -((65535 - val) + 1)
+       else:
+           return val
+
+
+   def run(self):
+      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0)
+      self.stopped = 0
+
+      lean = 0
+      gforce = 0
+
+      while True:
+         if self.stopped:
+            break
+
+         try:
+            gyro_xout = self.read_word_2c(0x43)
+            gyro_yout = self.read_word_2c(0x45)
+            gyro_zout = self.read_word_2c(0x47)
+
+            accel_xout = self.read_word_2c(0x3b)
+            accel_yout = self.read_word_2c(0x3d)
+            accel_zout = self.read_word_2c(0x3f)
+
+            data = {
+               "lean": accel_yout,
+               "gforce": gyro_xout
+            }
+
+            self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+            time.sleep(0.05)
+         except Exception, e:
+            time.sleep(0.1)
+            pass
+            
+   def stop(self):
+      self.stopped = 1
 
    def isRunning(self):
       return self.stopped == 0
