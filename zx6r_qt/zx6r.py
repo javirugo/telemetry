@@ -40,6 +40,12 @@ class MainWindow(QtGui.QMainWindow):
       self.DataRecordThread = DataRecordThread(self)
       self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
 
+      self.ui.labelLastLapTime.setText("00:00:00.00")
+      self.ui.labelBestLapTime.setText("00:00:00.00")
+      self.updateLaptimes({
+         "last": self.DataRecordThread.last_lap_time,
+         "best": self.DataRecordThread.fastest_lap_time})
+
       self.start_datetime = False
       self.current_round_id = 0
       self.latitude = 0
@@ -83,8 +89,11 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the DataRecordThread when a lap is finished
    def updateLaptimes(self, data):
-      self.ui.labelLaptimerLast.setText(data["last"])
-      self.ui.labelLaptimerBest.setText(data["best"])
+      if data["last"]:
+         self.ui.labelLastLapTime.setText(str(data["last"]))
+
+      if data["best"]:
+         self.ui.labelBestLapTime.setText(str(data["best"]))
 
 
    # Called from the KDSThread when new data is received from KDS

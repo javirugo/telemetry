@@ -30,6 +30,7 @@ class DataRecordThread(QtCore.QThread):
       self.laptimer.loadHistory(all_laps, self.last_lap_time, self.lap_start_time)
       self.db.close()
 
+
    def run(self):
       self.stopped = 0
 

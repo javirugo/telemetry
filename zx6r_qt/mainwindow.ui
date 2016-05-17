@@ -31,7 +31,7 @@ QTabBar::tab:selected { font-weight: bold; background-color: #4A585D; color: #85
 
 QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: #3E3E3E;}
 
-#labelBestLapTime, #labelLastLapTime { font-size: 58px; font-weight: bold; }
+#labelBestLapTime, #labelLastLapTime { font-size: 52px; font-weight: bold; }
 
 #labelCurrentLapTime {color: #95FAFF; }
 #labelBestLapTime {color: #24A523; }
@@ -63,7 +63,7 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -94,9 +94,9 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelLastLapTime">
         <property name="geometry">
          <rect>
-          <x>90</x>
+          <x>70</x>
           <y>100</y>
-          <width>321</width>
+          <width>361</width>
           <height>51</height>
          </rect>
         </property>
@@ -142,9 +142,9 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelBestLapTime">
         <property name="geometry">
          <rect>
-          <x>90</x>
+          <x>70</x>
           <y>180</y>
-          <width>321</width>
+          <width>361</width>
           <height>51</height>
          </rect>
         </property>
