@@ -26,8 +26,9 @@ class MainWindow(QtGui.QMainWindow):
 
       self.ui.pbRecord.clicked.connect(self.switchRecording)
       self.ui.pbReboot.clicked.connect(self.reboot)
+      self.ui.pbShutdown.clicked.connect(self.shutdown)
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
-      self.ui.radioLiveStatus.toggled.connect(self.pollerControl)
+      self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
       self.KDSThread = KDSThread()
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
@@ -62,10 +63,15 @@ class MainWindow(QtGui.QMainWindow):
       os.system("sudo reboot")
 
 
+   # For safeness, shutdown with a button
+   def shutdown(self):
+      os.system("sudo shutdown -h now")
+
+
    # Called when needed... This controls that the pollers are started or stopped
-   # depending on the status of "recording" and liveStatus-checkbox
+   # depending on the status of "recording" and liveStatus-pushbutton
    def pollerControl(self, checkbox_status = False):
-      if self.ui.radioLiveStatus.isChecked() or self.recording:
+      if self.ui.pbLiveStatus.isChecked() or self.recording:
          if not self.KDSThread.isRunning(): self.KDSThread.start()
          if not self.I2CThread.isRunning(): self.I2CThread.start()
          if not self.GPSThread.isRunning(): self.GPSThread.start()
@@ -86,7 +92,7 @@ class MainWindow(QtGui.QMainWindow):
       self.rpm = data["rpm"] if data["rpm"].replace('.','',1).isdigit() else 0
       self.gear = data["gear"] if data["gear"].replace('.','',1).isdigit() else 0
 
-      if self.ui.radioLiveStatus.isChecked():
+      if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_rpm.setText(str(self.rpm))
          self.ui.labelStatus_gear.setText(str(self.gear))
 
@@ -97,7 +103,7 @@ class MainWindow(QtGui.QMainWindow):
       self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
       self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
 
-      if self.ui.radioLiveStatus.isChecked():
+      if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
          self.ui.labelStatus_kph.setText(str(self.speed))
@@ -113,7 +119,7 @@ class MainWindow(QtGui.QMainWindow):
       self.gforce_z = data["gforce_z"]
       self.compass = data["compass"]
 
-      if self.ui.radioLiveStatus.isChecked():
+      if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_gyros.setText(str(self.lean_x))
          self.ui.labelStatus_accelerometer.setText(str(self.gforce_y))
          self.ui.labelStatus_heading.setText(str(self.compass))

@@ -23,6 +23,12 @@ class DataRecordThread(QtCore.QThread):
       self.fastest_lap_time = 0
       self.last_lap_time = 0
       self.lap_start_time = 0
+      
+      self.db = sqlite3.connect('data.db')
+      cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
+      all_laps = cur.fetchall()
+      self.laptimer.loadHistory(all_laps, self.last_lap_time, self.lap_start_time)
+      self.db.close()
 
    def run(self):
       self.stopped = 0

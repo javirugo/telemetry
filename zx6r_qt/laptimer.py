@@ -39,7 +39,7 @@ class Laptimer():
          track_file.close()
 
 
-   def check(latitude, longitude, current_dt = False):
+   def check(self, latitude, longitude, current_dt = False):
       current_point = Point(latitude, longitude)
       cur_ts = datetime.utcnow() if not current_dt else current_dt
 
@@ -68,4 +68,12 @@ class Laptimer():
          self.inside_area = False
 
       return False
+
+
+   def loadHistory(self, all_laps, last_lap, best_lap):
+      for lap in all_laps:
+         last_lap = datetime.fromtimestamp(lap["end"]) - datetime.fromtimestamp(lap["start"])
+         if last_lap < best_lap or best_lap == 0:
+            best_lap = last_lap
+
 
