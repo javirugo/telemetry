@@ -1,11 +1,12 @@
 import sys, os
 from datetime import datetime
 import time
+import math
 import glob
 
 from PyQt4 import QtGui, QtCore
 import mainwindow
-from threads import KDSThread, GPSThread, MPU6050Thread
+from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
 
 settings = {
   "start_raspi": "/picam/start.sh",
@@ -18,7 +19,6 @@ class MainWindow(QtGui.QMainWindow):
    def __init__(self, settings):
       super(MainWindow, self).__init__()
       self.recording = False
-      self.start_datetime = False
       self.settings = settings
       self.process = QtCore.QProcess(self)
       self.ui = mainwindow.Ui_MainWindow()
@@ -26,179 +26,153 @@ class MainWindow(QtGui.QMainWindow):
 
       self.ui.pbRecord.clicked.connect(self.switchRecording)
       self.ui.pbReboot.clicked.connect(self.reboot)
-      self.ui.tabMedia.currentChanged.connect(self.changedSelectedTab)
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
-      self.ui.lvMediaList.doubleClicked.connect(self.playVideo)
-      self.ui.radioLiveStatus.toggled.connect(self.liveStatusSwitch)
-      self.ui.radioLiveLaptimer.toggled.connect(self.liveLaptimerSwitch)
+      self.ui.radioLiveStatus.toggled.connect(self.pollerControl)
 
       self.KDSThread = KDSThread()
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
-      self.MPU6050Thread = MPU6050Thread()
-      self.connect( self.MPU6050Thread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateMPU6050 )
+      self.I2CThread = I2CThread()
+      self.connect( self.I2CThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateI2C )
       
+      self.DataRecordThread = DataRecordThread(self)
+      self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
+
+      self.start_datetime = False
+      self.current_round_id = 0
       self.latitude = 0
       self.longitude = 0
       self.speed = 0
       self.rpm = 0
+      self.gear = 0
       self.kph = 0
-      self.lean = 0
-      self.gforce = 0
+      self.lean_x = 0
+      self.lean_y = 0
+      self.lean_z = 0
+      self.gforce_x = 0
+      self.gforce_y = 0
+      self.gforce_z = 0
+      self.compass = 0
+      
 
-
+   # If anything goes wrong, click the "reboot" button!
+   # https://www.youtube.com/watch?v=PtXtIivRRKQ
    def reboot(self):
       os.system("sudo reboot")
 
 
-   def pollMetrics(self, running = True):
-      if running:
-         #if not self.KDSThread.isRunning():
-         #   self.KDSThread.start()
-
-         if not self.MPU6050Thread.isRunning():
-            self.MPU6050Thread.start()
-
-         if not self.GPSThread.isRunning():
-            self.GPSThread.start()
+   # Called when needed... This controls that the pollers are started or stopped
+   # depending on the status of "recording" and liveStatus-checkbox
+   def pollerControl(self, checkbox_status = False):
+      if self.ui.radioLiveStatus.isChecked() or self.recording:
+         if not self.KDSThread.isRunning(): self.KDSThread.start()
+         if not self.I2CThread.isRunning(): self.I2CThread.start()
+         if not self.GPSThread.isRunning(): self.GPSThread.start()
       else:
-         #self.KDSThread.stop()
+         self.KDSThread.stop()
          self.GPSThread.stop()
-         self.MPU6050Thread.stop()
+         self.I2CThread.stop()
 
 
-   def liveLaptimerSwitch(self, checked):
-      pass
+   # Called from the DataRecordThread when a lap is finished
+   def updateLaptimes(self, data):
+      self.ui.labelLaptimerLast.setText(data["last"])
+      self.ui.labelLaptimerBest.setText(data["best"])
 
 
-   def liveStatusSwitch(self, checked):
-      if checked:
-         self.pollMetrics()
-      else:
-         if not self.recording:
-            self.pollMetrics(False)
-
-
+   # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
-      self.rpm = data["rpm"]
-      self.kph = data["kph"]
-      self.lean = data["lean"]
-      self.gforce = data["gforce"]
+      self.rpm = data["rpm"] if data["rpm"].replace('.','',1).isdigit() else 0
+      self.gear = data["gear"] if data["gear"].replace('.','',1).isdigit() else 0
 
       if self.ui.radioLiveStatus.isChecked():
-         self.ui.labelStatus_gyros.setText(str(self.lean))
-         self.ui.labelStatus_accelerometer.setText(str(self.gforce))
          self.ui.labelStatus_rpm.setText(str(self.rpm))
-         self.ui.labelStatus_kph.setText(str(self.kph))
+         self.ui.labelStatus_gear.setText(str(self.gear))
 
 
+   # Called from the GPSThread when new data is received from GPS
    def updateGPS(self, data):
-      print data
-      self.latitude = data["latitude"]
-      self.longitude = data["longitude"]
-      self.speed = data["speed"]
+      self.latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
+      self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
+      self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
 
       if self.ui.radioLiveStatus.isChecked():
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
+         self.ui.labelStatus_kph.setText(str(self.speed))
 
-   def updateMPU6050(self, data):
-      #print data
-      self.lean = data["lean"]
-      self.gforce = data["gforce"]
+
+   # Called from the I2CThread when new data is available on I2C
+   def updateI2C(self, data):
+      self.lean_x = data["lean_x"]
+      self.lean_y = data["lean_y"]
+      self.lean_z = data["lean_z"]
+      self.gforce_x = data["gforce_x"]
+      self.gforce_y = data["gforce_y"]
+      self.gforce_z = data["gforce_z"]
+      self.compass = data["compass"]
 
       if self.ui.radioLiveStatus.isChecked():
-         self.ui.labelStatus_gyros.setText(str(self.lean))
+         self.ui.labelStatus_gyros.setText(str(self.lean_x))
+         self.ui.labelStatus_accelerometer.setText(str(self.gforce_y))
+         self.ui.labelStatus_heading.setText(str(self.compass))
 
 
+   # This is called with a small delay from the record-switch method to allow picam
+   # to start the daemon and get ready
    def startRecording(self):
-         self.start_datetime = datetime.now()
-         
-         os.system("echo 'dir=/datos\nfilename=%s.ts' > /picam/hooks/start_record" % self.start_datetime)
+         #self.start_datetime = (datetime.utcnow() - datetime(1970, 1, 1)).total_seconds()
+         self.start_datetime = datetime.utcnow()
+
+         os.system("echo 'dir=/datos\nfilename=%s.ts' > /picam/hooks/start_record" % \
+            round((self.start_datetime - datetime(1970, 1, 1)).total_seconds()))
+
+         self.DataRecordThread.start()
          self.ui.pbRecord.setStyleSheet("background-color: #AC1E2C;")
          self.ui.pbRecord.setText("STOP Recording")
 
 
+   # This is called with a small delay from the record-switch method to allow picam
+   # to stop recording before killing the daemon
    def stopRecording(self):
          os.system("killall picam")
-
-         if not self.ui.radioLiveStatus.isChecked():
-            self.pollMetrics(False)
 
          self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
          self.ui.pbRecord.setText("Record")
          self.recording = False
+         self.pollerControl()
 
 
+   # Issued when the record button is pressed
    def switchRecording(self):
       self.timeoutTimer = QtCore.QTimer(self)
       self.timeoutTimer.setSingleShot(True)
 
       if not self.recording:
+         self.ui.pbRecord.setStyleSheet("background-color: #662222;")
          self.recording = True
-
-         # TODO: Ensure gnome-mplayer is killed
-
-         self.pollMetrics()
+         self.pollerControl()
 
          self.process.close()
          self.process.start(self.settings["start_raspi"])
          self.timeoutTimer.timeout.connect(self.startRecording)
 
       else:
-         if not self.ui.radioLiveStatus.isChecked():
-            self.pollMetrics(False)
-
+         self.ui.pbRecord.setStyleSheet("background-color: #662222;")
          os.system("touch %s/hooks/stop_record" % self.settings["picam_home"])
+         self.DataRecordThread.stop()
          self.timeoutTimer.timeout.connect(self.stopRecording)
 
       self.timeoutTimer.start(3000)
 
 
-   def updateVideosList(self):
-      model = QtGui.QStandardItemModel(self.ui.lvMediaList)
-
-      list = glob.glob("/datos/*.ts")
-      for video in list:
-         videoItem = QtGui.QStandardItem(video.replace("/datos/", "").replace(".ts", ""))
-         model.appendRow(videoItem)
-
-      self.ui.lvMediaList.setModel(model)
-
-
-   def changedSelectedTab(self, tabIndex):
-      if tabIndex == 3:
-         self.updateVideosList()
-      else:
-         self.process.kill()
-
-
-   def playVideo(self, clickedVideo):
-      if self.recording: return
-      self.process.close()
-      self.process.start(
-         'gnome-mplayer', [
-            "--window", str(self.ui.widgetPlayer.winId()),
-            "--showcontrols=1",
-            "--autostart=1",
-            "--disablefullscreen",
-            "--replace_and_play",
-            "--width=350",
-            "--height=260",
-            "--quit_on_complete",
-            "/datos/%s.ts" % clickedVideo.data().toString()])
-
-
-   '''
-   def stopVideo(self, event):
-      self.process.kill()
-      self.ui.widgetPlayer.setStyleSheet("background-color: black;")
-   '''
 
 app = QtGui.QApplication(sys.argv)
 my_mainWindow = MainWindow(settings)
-my_mainWindow.show()
-#my_mainWindow.showFullScreen()
+QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+#my_mainWindow.show()
+my_mainWindow.showFullScreen()
 
 sys.exit(app.exec_())
+
