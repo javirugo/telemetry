@@ -1,12 +1,15 @@
 import sys, os
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import math
 import glob
 
 from PyQt4 import QtGui, QtCore
 import mainwindow
-from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
+
+#from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
+from threads import DataRecordThread
+from mocks import KDSThread, GPSThread, I2CThread
 
 settings = {
   "start_raspi": "/picam/start.sh",
@@ -40,8 +43,8 @@ class MainWindow(QtGui.QMainWindow):
       self.DataRecordThread = DataRecordThread(self)
       self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
 
-      self.ui.labelLastLapTime.setText("00:00:00.00")
-      self.ui.labelBestLapTime.setText("00:00:00.00")
+      self.ui.labelLastLapTime.setText("00:00.000")
+      self.ui.labelBestLapTime.setText("00:00.000")
       self.updateLaptimes({
          "last": self.DataRecordThread.last_lap_time,
          "best": self.DataRecordThread.fastest_lap_time})
@@ -89,17 +92,29 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the DataRecordThread when a lap is finished
    def updateLaptimes(self, data):
-      if data["last"]:
-         self.ui.labelLastLapTime.setText(str(data["last"]))
+      if isinstance(data["last"], timedelta):
+         self.ui.labelLastLapTime.setText(
+            "%.2d:%.2d.%s" % (
+               (data["last"].seconds//60)%60,
+               data["last"].seconds%60,
+               str(data["last"].microseconds)[:3]))
 
-      if data["best"]:
-         self.ui.labelBestLapTime.setText(str(data["best"]))
+         #self.ui.labelLastLapTime.setText(str(data["last"]))
+
+      if isinstance(data["best"], timedelta):
+         self.ui.labelBestLapTime.setText(
+            "%.2d:%.2d.%s" % (
+               (data["best"].seconds//60)%60,
+               data["best"].seconds%60,
+               str(data["best"].microseconds)[:3]))
+
+         #self.ui.labelBestLapTime.setText(str(data["best"]))
 
 
    # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
-      self.rpm = data["rpm"] if data["rpm"].replace('.','',1).isdigit() else 0
-      self.gear = data["gear"] if data["gear"].replace('.','',1).isdigit() else 0
+      self.rpm = data["rpm"]
+      self.gear = data["gear"]
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_rpm.setText(str(self.rpm))
@@ -141,7 +156,7 @@ class MainWindow(QtGui.QMainWindow):
          self.start_datetime = datetime.utcnow()
 
          os.system("echo 'dir=/datos\nfilename=%s.ts' > /picam/hooks/start_record" % \
-            round((self.start_datetime - datetime(1970, 1, 1)).total_seconds()))
+            int((self.start_datetime - datetime(1970, 1, 1)).total_seconds()))
 
          self.DataRecordThread.start()
          self.ui.pbRecord.setStyleSheet("background-color: #AC1E2C;")

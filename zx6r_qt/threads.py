@@ -18,38 +18,48 @@ class DataRecordThread(QtCore.QThread):
       self.mainWin = mainwin
       self.laptimer = Laptimer("/home/jaruiz/telemetry/tracks/ALMERIA.json")
       self.last_lap_id = 0
-      self.last_sector_id = 0
+      self.last_sector_idlap = 0
+      self.last_sector_start = 0
 
       self.fastest_lap_time = 0
       self.last_lap_time = 0
       self.lap_start_time = 0
       
-      self.db = sqlite3.connect('data.db')
+      self.db = sqlite3.connect('/home/jaruiz/telemetry/zx6r_qt/data.db')
       cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
       all_laps = cur.fetchall()
-      self.laptimer.loadHistory(all_laps, self.last_lap_time, self.lap_start_time)
+      self.last_lap_time, self.fastest_lap_time = self.laptimer.loadHistory(all_laps)
+
+      self.emit(QtCore.SIGNAL('update(PyQt_PyObject)'), {
+         "last": self.last_lap_time,
+         "best": self.fastest_lap_time})
+
       self.db.close()
 
 
    def run(self):
       self.stopped = 0
+      self.last_lap_id = 0
+      self.last_sector_idlap = 0
+      self.last_sector_start = 0
+      self.lap_start_time = 0
 
-      self.db = sqlite3.connect('data.db')
+      self.db = sqlite3.connect('/home/jaruiz/telemetry/zx6r_qt/data.db')
       cur = self.db.cursor()
 
       cur.execute("INSERT INTO round(start, video) values(%s, %s)" % (
-         round((self.mainWin.start_datetime - datetime(1970, 1, 1)).total_seconds()),
-         round(self.mainWin.start_datetime)))
+         (self.mainWin.start_datetime - datetime(1970, 1, 1)).total_seconds(),
+         int((self.mainWin.start_datetime - datetime(1970, 1, 1)).total_seconds())))
 
       current_round_id = cur.lastrowid
 
       while True:
-         print "pass"
          point_datetime_obj = datetime.utcnow()
          point_datetime = (point_datetime_obj - datetime(1970, 1, 1)).total_seconds()
+
          insert_query = ("INSERT INTO data(id_round, datetime, latitude, longitude, speed, "
             "rpm, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
-            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime,
                self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
@@ -63,38 +73,41 @@ class DataRecordThread(QtCore.QThread):
          if checkpoint:
          
             # Set ending time of last sector
-            if self.last_sector_id:
-               cur.execute("UPDATE sector SET end=%s WHERE id=%s" %(
+            if self.last_lap_id:
+               cur.execute("UPDATE sector SET end=%.3f WHERE id_lap=%s and start=%s" %(
                   point_datetime,
-                  self.last_sector_id))
+                  self.last_lap_id,
+                  self.last_sector_start))
          
             if checkpoint == self.laptimer.CHECKPOINT_START:
                if self.last_lap_id:
-                  cur.execute("UPDATE lap SET end=%s WHERE id=%s" %(
+                  cur.execute("UPDATE lap SET end=%.3f WHERE id=%s" %(
                      point_datetime,
                      self.last_lap_id))
 
-                  # Calculate "last lap time"
-                  if self.lap_start_time:
-                     self.last_lap_time = point_datetime - point_datetime_obj
-                     if self.last_lap_time < self.fastest_lap_time:
-                        self.fastest_lap_time = self.last_lap_time
+               # Calculate "last lap time"
+               if self.lap_start_time:
+                  self.last_lap_time = point_datetime_obj - self.lap_start_time
 
-                     self.emit(QtCore.SIGNAL('update(PyQt_PyObject)'), {
-                        "last": self.last_lap_time,
-                        "best": self.fastest_lap_time})
+                  if self.fastest_lap_time == 0 or self.last_lap_time < self.fastest_lap_time:
+                     self.fastest_lap_time = self.last_lap_time
 
-                  self.lap_start_time = point_datetime
-               
-               cur.execute("INSERT INTO lap(id_round, start) VALUES(%s, %s)" %(
+                  self.emit(QtCore.SIGNAL('update(PyQt_PyObject)'), {
+                     "last": self.last_lap_time,
+                     "best": self.fastest_lap_time})
+
+               self.lap_start_time = point_datetime_obj
+
+               cur.execute("INSERT INTO lap(id_round, start) VALUES(%s, %.3f)" %(
                   current_round_id, point_datetime))
 
                self.last_lap_id = cur.lastrowid
 
-            cur.execute("INSERT INTO sector(id_lap, start) VALUES(%s, %s)" %(
-               self.last_lap_id, point_datetime))
+            if self.last_lap_id:
+               cur.execute("INSERT INTO sector(id_lap, start) VALUES(%s, %.3f)" %(
+                  self.last_lap_id, point_datetime))
 
-            self.last_sector_id = cur.lastrowid
+            self.last_sector_start = "%.3f" % point_datetime
 
 
          if self.stopped:
@@ -104,7 +117,7 @@ class DataRecordThread(QtCore.QThread):
             break
 
          self.db.commit()
-         time.sleep(0.05)
+         time.sleep(0.04)
 
 
    def stop(self):
