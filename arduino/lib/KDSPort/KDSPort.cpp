@@ -9,11 +9,11 @@ KDSPort::KDSPort(uint8_t pinTX, uint8_t pinRX)
 }
 
 
-uint32_t KDSPort::getRPM() { return this->rpms; }
+uint16_t KDSPort::getRPM() { return this->rpms; }
 
-uint32_t KDSPort::getKPH() { return this->kph; }
+uint16_t KDSPort::getKPH() { return this->kph; }
 
-int KDSPort::getGear() { return this->gear; }
+uint8_t KDSPort::getGear() { return this->gear; }
 
 
 uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t reqLen, uint8_t maxLen)
@@ -63,7 +63,6 @@ uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t 
   // Now send the command...
   for (uint8_t i = 0; i < bytesToSend; i++) {
     bytesSent += Serial.write(buf[i]);
-    delay(this->ISORequestByteDelay);
   }
   
   startTime = millis();
@@ -242,9 +241,8 @@ void KDSPort::loop()
       //      but the server does not specify the reason of the rejection
 
       // Grab RPMs
+      delay(this->ISORequestDelay);
       for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
-
-      // Request RPM is register: 0x09
       cmdBuf[1] = 0x09;
       respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
       if (respSize == 4) {
@@ -258,10 +256,11 @@ void KDSPort::loop()
          return;
       }
 
-      if (this->gearCounter == 3)
+      if (this->gearCounter == 8)
       {
          // Gear
          delay(this->ISORequestDelay + 5);
+         this->gearCounter = 0;
 	      for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
 	      cmdBuf[1] = 0x0B;
 	      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
@@ -276,33 +275,36 @@ void KDSPort::loop()
             this->ECUconnected = false;
             return;
          }
-
-         this->gearCounter = 0;
-         delay(this->ISORequestDelay);
       }
       else
       {
-         delay(this->ISORequestDelay);
          this->gearCounter++;
       }
 
-      /*
-      // Speed
-      for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
-      cmdBuf[1] = 0x0C;
-      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
-      if (respSize == 4) {
-         // Formula for Kms/h from response
-         this->kph = ((respBuf[2] << 8) + respBuf[3]) / 2;
-         delay(this->ISORequestDelay);
-      }
-      else if (respSize == 0)
+
+      if (this->kphCounter == 5)
       {
-         this->kph = 0;
-         this->ECUconnected = false;
-         return;
+         // Speed
+         delay(this->ISORequestDelay + 5);
+         this->kphCounter = 0;
+         for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
+         cmdBuf[1] = 0x0C;
+         respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
+         if (respSize == 4) {
+            // Formula for Kms/h from response
+            this->kph = ((respBuf[2] << 8) + respBuf[3]) / 2;
+         }
+         else if (respSize == 0)
+         {
+            this->kph = 0;
+            this->ECUconnected = false;
+            return;
+         }
       }
-      */
+      else
+      {
+         this->kphCounter++;
+      }
    }
 }
 

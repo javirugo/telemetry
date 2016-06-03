@@ -7,8 +7,8 @@ SoftwareSerial SoftSer(11, 10); // RX, TX
 
 // Timings
 #define MAXSENDTIME 2000 // 2 second timeout on KDS comms.
-const uint32_t ISORequestByteDelay = 10;
-const uint32_t ISORequestDelay = 40; // Time between requests.
+const uint32_t ISORequestByteDelay = 5;
+const uint32_t ISORequestDelay = 50; // Time between requests.
 
 // Addresses
 const uint8_t ECUaddr = 0x11;
@@ -18,7 +18,7 @@ bool ECUconnected = false;
 
 uint32_t rpms = 0;
 uint32_t kds_data_kph = 0;
-
+int gear = 0;
 
 void setup() {
   // Setup pins
@@ -76,6 +76,7 @@ void loop() {
    }
    delay(ISORequestDelay);
 
+      /*
     // Speed
    for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
 
@@ -221,7 +222,7 @@ uint8_t sendRequest(const uint8_t *request, uint8_t *response, uint8_t reqLen, u
   // Now send the command...
   for (uint8_t i = 0; i < bytesToSend; i++) {
     bytesSent += Serial.write(buf[i]);
-    delay(ISORequestByteDelay);
+    //delay(ISORequestByteDelay);
   }
   
   startTime = millis();

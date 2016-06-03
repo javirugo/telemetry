@@ -3,39 +3,37 @@
 
 #include <stdint.h>
 #include <Arduino.h>
-
+#include <SoftwareSerial.h>
 
 class KDSPort
 {
    private:
       uint8_t _pinTX;
       uint8_t _pinRX;
-      const uint32_t ISORequestDelay = 50; // Time between requests.
-      const uint32_t ISORequestByteDelay = 10;
+      const uint32_t ISORequestDelay = 47; // Time between requests.
 
       const uint8_t ECUaddr = 0x11;
       const uint8_t myAddr = 0xF2;
       const uint16_t MAXSENDTIME = 2000;
 
       bool ECUconnected = false;
-      uint32_t rpms = 0;
-      uint32_t kph = 0;
-      int gear = 0;
-      int gearCounter = 0;
+      uint16_t rpms = 0;
+      uint16_t kph = 0;
+      uint8_t kphCounter = 0;
+      uint8_t gear = 0;
+      uint8_t gearCounter = 0;
 
       uint8_t sendRequest(const uint8_t *request, uint8_t *response, uint8_t reqLen, uint8_t maxLen);
       uint8_t calcChecksum(uint8_t *data, uint8_t len);
 
    public:
       KDSPort(uint8_t pinTX, uint8_t pinRX);
-      //void setup(SoftwareSerial *SoftSer);
-      //void loop(SoftwareSerial *SoftSer);
       void setup();
       void loop();
 
-      uint32_t getRPM();
-      uint32_t getKPH();
-      int getGear();
+      uint16_t getRPM();
+      uint16_t getKPH();
+      uint8_t getGear();
 };
 
 #endif KDSPORT_h

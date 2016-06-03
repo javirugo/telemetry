@@ -7,13 +7,14 @@ import glob
 from PyQt4 import QtGui, QtCore
 import mainwindow
 
-#from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
-from threads import DataRecordThread
-from mocks import KDSThread, GPSThread, I2CThread
+from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
+#from threads import DataRecordThread
+#from mocks import KDSThread, GPSThread, I2CThread
 
 settings = {
   "start_raspi": "/picam/start.sh",
-  "picam_home": "/picam"
+  "picam_home": "/picam",
+  "KDSSerialPort": "/dev/ttyKDS"
 }
 
 
@@ -33,7 +34,7 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
-      self.KDSThread = KDSThread()
+      self.KDSThread = KDSThread(settings["KDSSerialPort"])
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
@@ -114,10 +115,12 @@ class MainWindow(QtGui.QMainWindow):
    # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
       self.rpm = data["rpm"]
+      self.kph = data["kph"]
       self.gear = data["gear"]
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_rpm.setText(str(self.rpm))
+         self.ui.labelStatus_kph.setText(str(self.kph))
          self.ui.labelStatus_gear.setText(str(self.gear))
 
 
@@ -130,7 +133,7 @@ class MainWindow(QtGui.QMainWindow):
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
-         self.ui.labelStatus_kph.setText(str(self.speed))
+         self.ui.labelStatus_speed.setText(str(self.speed))
 
 
    # Called from the I2CThread when new data is available on I2C
@@ -144,8 +147,8 @@ class MainWindow(QtGui.QMainWindow):
       self.compass = data["compass"]
 
       if self.ui.pbLiveStatus.isChecked():
-         self.ui.labelStatus_gyros.setText(str(self.lean_x))
-         self.ui.labelStatus_accelerometer.setText(str(self.gforce_y))
+         self.ui.labelStatus_gyros.setText(str(round(self.lean_x, 2)))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_y, 2)))
          self.ui.labelStatus_heading.setText(str(self.compass))
 
 

@@ -58,11 +58,11 @@ class DataRecordThread(QtCore.QThread):
          point_datetime = (point_datetime_obj - datetime(1970, 1, 1)).total_seconds()
 
          insert_query = ("INSERT INTO data(id_round, datetime, latitude, longitude, speed, "
-            "rpm, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
-            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+            "rpm, kph, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
+            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime,
                self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
-               int(self.mainWin.rpm), int(self.mainWin.gear),
+               int(self.mainWin.rpm), int(self.mainWin.kph), int(self.mainWin.gear),
                self.mainWin.lean_x, self.mainWin.lean_y, self.mainWin.lean_z,
                self.mainWin.gforce_x, self.mainWin.gforce_y, self.mainWin.gforce_z,
                self.mainWin.compass))
@@ -129,17 +129,16 @@ class DataRecordThread(QtCore.QThread):
 
 
 class KDSThread(QtCore.QThread):
-   def __init__(self):
+   def __init__(self, KDSSerial = '/dev/ttyKDS'):
       QtCore.QThread.__init__(self)
       self.stopped = 1
+      self.KDSSerial = KDSSerial
 
    def run(self):
       self.stopped = 0
 
-      rpm = 0
-
       self.serialKDS = serial.Serial(
-         port='/dev/ttyUSB0',
+         port=self.KDSSerial,
          baudrate=19200,
          parity=serial.PARITY_NONE,
          stopbits=serial.STOPBITS_ONE,
@@ -154,9 +153,12 @@ class KDSThread(QtCore.QThread):
          if self.serialKDS.inWaiting():
             str = self.serialKDS.readline()
             parts = str.replace("\n", "").split(", ")
-            if len(parts) == 2:
-               data = {"rpm": parts[0], "gear": parts[1]}
+            if len(parts) == 3:
+               data = {"rpm": parts[0], "kph": parts[1], "gear": parts[2]}
                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+
+   def setPort(self, port):
+      self.KDSSerial = port
 
    def stop(self):
       self.stopped = 1
@@ -223,7 +225,11 @@ class I2CThread(QtCore.QThread):
 
 
    def run(self):
-      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0)
+      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
+      self.bus.write_byte_data(self.MUP6050_address, 0x1C, 0x10) # set accelerometer to 8g sensibility
+      self.bus.write_byte_data(self.HMC5883L_address, 0, 0b01110000)
+      self.bus.write_byte_data(self.HMC5883L_address, 1, 0b00100000)
+      self.bus.write_byte_data(self.HMC5883L_address, 2, 0b00000000)
       self.stopped = 0
 
       lean = 0
@@ -252,19 +258,19 @@ class I2CThread(QtCore.QThread):
             accel_yout = self.read_word_2c(self.MUP6050_address, 0x3d)
 
             data = {
-               "lean_x": accel_yout,
-               "lean_y": accel_xout,
-               "lean_z": accel_zout,
-               "gforce_x": gyro_yout,
-               "gforce_y": gyro_xout,
-               "gforce_z": gyro_zout,
+               "lean_x": accel_yout / 45.51,
+               "lean_y": accel_xout / 45.51,
+               "lean_z": accel_zout / 45.51,
+               "gforce_x": gyro_xout / 4096.0,
+               "gforce_y": gyro_xout / 4096,
+               "gforce_z": gyro_zout / 4096,
                "compass": math.degrees(bearing)
             }
 
             self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
             time.sleep(0.05)
          except Exception, e:
-            time.sleep(0.1)
+            time.sleep(0.2)
             pass
 
    def stop(self):
