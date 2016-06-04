@@ -225,8 +225,14 @@ class I2CThread(QtCore.QThread):
 
 
    def run(self):
-      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
-      self.bus.write_byte_data(self.MUP6050_address, 0x1C, 0x10) # set accelerometer to 8g sensibility
+      #self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
+
+      self.bus.write_byte_data(self.MUP6050_address, 0x6B, 0x00) # set mpu6050 to mode CLKSEL
+      self.bus.write_byte_data(self.MUP6050_address, 0x19, 0x07) # set gyro refresh rate (125hz)
+      self.bus.write_byte_data(self.MUP6050_address, 0x1A, 0x06) # set DLPF to 6 (5Hz)
+      self.bus.write_byte_data(self.MUP6050_address, 0x1B, 0x18) # set gyro self test and measurement range (2000 deg/s)
+      self.bus.write_byte_data(self.MUP6050_address, 0x1C, 0x01) # set accelerometer to 2g sensibility
+
       self.bus.write_byte_data(self.HMC5883L_address, 0, 0b01110000)
       self.bus.write_byte_data(self.HMC5883L_address, 1, 0b00100000)
       self.bus.write_byte_data(self.HMC5883L_address, 2, 0b00000000)
@@ -249,21 +255,20 @@ class I2CThread(QtCore.QThread):
                 bearing += 2 * math.pi
 
 
+            gyro_xout = self.read_word_2c(self.MUP6050_address, 0x43)
             gyro_yout = self.read_word_2c(self.MUP6050_address, 0x45)
             gyro_zout = self.read_word_2c(self.MUP6050_address, 0x47)
             accel_xout = self.read_word_2c(self.MUP6050_address, 0x3b)
+            accel_yout = self.read_word_2c(self.MUP6050_address, 0x3d)
             accel_zout = self.read_word_2c(self.MUP6050_address, 0x3f)
 
-            gyro_xout = self.read_word_2c(self.MUP6050_address, 0x43)
-            accel_yout = self.read_word_2c(self.MUP6050_address, 0x3d)
-
             data = {
-               "lean_x": accel_yout / 45.51,
-               "lean_y": accel_xout / 45.51,
-               "lean_z": accel_zout / 45.51,
-               "gforce_x": gyro_xout / 4096.0,
-               "gforce_y": gyro_xout / 4096,
-               "gforce_z": gyro_zout / 4096,
+               "lean_x": accel_xout,
+               "lean_y": accel_yout,
+               "lean_z": accel_zout,
+               "gforce_x": gyro_xout / 1024,
+               "gforce_y": gyro_xout / 1024,
+               "gforce_z": gyro_zout / 1024,
                "compass": math.degrees(bearing)
             }
 
