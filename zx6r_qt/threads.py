@@ -139,7 +139,6 @@ class KDSThread(QtCore.QThread):
 
    def run(self):
       self.stopped = 0
-
       self.serialKDS = pigpio.pi()
       self.serialKDS.set_mode(self.KDSSerial, pigpio.INPUT)
       self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
@@ -251,6 +250,8 @@ class I2CThread(QtCore.QThread):
       self.MUP6050_address = 0x68
       self.HMC5883L_address = 0x1e
       self.HMC5883L_scale = 0.92
+      self.gyro_scale = 131.0
+      self.accel_scale = 16384.0
 
    def read_word(self, i2c_dev, adr):
       high = self.bus.read_byte_data(i2c_dev, adr)
@@ -265,15 +266,53 @@ class I2CThread(QtCore.QThread):
       else:
          return val
 
+   def read_all(self):
+      raw_gyro_data = self.bus.read_i2c_block_data(self.MUP6050_address, 0x43, 6)
+      raw_accel_data = self.bus.read_i2c_block_data(self.MUP6050_address, 0x3b, 6)
+
+      gyro_scaled_x = self.twos_compliment((raw_gyro_data[0] << 8) + raw_gyro_data[1]) / self.gyro_scale
+      gyro_scaled_y = self.twos_compliment((raw_gyro_data[2] << 8) + raw_gyro_data[3]) / self.gyro_scale
+      gyro_scaled_z = self.twos_compliment((raw_gyro_data[4] << 8) + raw_gyro_data[5]) / self.gyro_scale
+
+      accel_scaled_x = self.twos_compliment((raw_accel_data[0] << 8) + raw_accel_data[1]) / self.accel_scale
+      accel_scaled_y = self.twos_compliment((raw_accel_data[2] << 8) + raw_accel_data[3]) / self.accel_scale
+      accel_scaled_z = self.twos_compliment((raw_accel_data[4] << 8) + raw_accel_data[5]) / self.accel_scale
+
+      return(gyro_scaled_x,gyro_scaled_y,gyro_scaled_z,accel_scaled_x,accel_scaled_y,accel_scaled_z)
+
+   def twos_compliment(self, val):
+      if (val >= 0x8000):
+         return -((65535 - val) + 1)
+      else:
+         return val
+
+   def get_y_rotation(self, x,y,z):
+      radians = math.atan2(x, self.dist(y,z))
+      return -math.degrees(radians)
+
+   def get_x_rotation(self, x,y,z):
+      radians = math.atan2(y, self.dist(x,z))
+      return math.degrees(radians)
+
+   def dist(self, a, b):
+      return math.sqrt((a * a) + (b * b))
+
 
    def run(self):
-      #self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
-
-      self.bus.write_byte_data(self.MUP6050_address, 0x6B, 0x00) # set mpu6050 to mode CLKSEL
-      self.bus.write_byte_data(self.MUP6050_address, 0x19, 0x07) # set gyro refresh rate (125hz)
+      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
       self.bus.write_byte_data(self.MUP6050_address, 0x1A, 0x06) # set DLPF to 6 (5Hz)
-      self.bus.write_byte_data(self.MUP6050_address, 0x1B, 0x18) # set gyro self test and measurement range (2000 deg/s)
-      self.bus.write_byte_data(self.MUP6050_address, 0x1C, 0x01) # set accelerometer to 2g sensibility
+
+      self.time_diff = 0.01
+      (gyro_scaled_x, gyro_scaled_y, gyro_scaled_z, accel_scaled_x, accel_scaled_y, accel_scaled_z) = self.read_all()
+
+      last_x = self.get_x_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
+      last_y = self.get_y_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
+
+      self.gyro_offset_x = gyro_scaled_x
+      self.gyro_offset_y = gyro_scaled_y
+
+      self.gyro_total_x = (last_x) - self.gyro_offset_x
+      self.gyro_total_y = (last_y) - self.gyro_offset_y
 
       self.bus.write_byte_data(self.HMC5883L_address, 0, 0b01110000)
       self.bus.write_byte_data(self.HMC5883L_address, 1, 0b00100000)
@@ -296,28 +335,35 @@ class I2CThread(QtCore.QThread):
             if (bearing < 0):
                 bearing += 2 * math.pi
 
+            time.sleep(self.time_diff - 0.005)
+            (gyro_scaled_x, gyro_scaled_y, gyro_scaled_z, accel_scaled_x, accel_scaled_y, accel_scaled_z) = self.read_all()
 
-            gyro_xout = self.read_word_2c(self.MUP6050_address, 0x43)
-            gyro_yout = self.read_word_2c(self.MUP6050_address, 0x45)
-            gyro_zout = self.read_word_2c(self.MUP6050_address, 0x47)
-            accel_xout = self.read_word_2c(self.MUP6050_address, 0x3b)
-            accel_yout = self.read_word_2c(self.MUP6050_address, 0x3d)
-            accel_zout = self.read_word_2c(self.MUP6050_address, 0x3f)
+            gyro_scaled_x -= self.gyro_offset_x
+            gyro_scaled_y -= self.gyro_offset_y
+
+            gyro_x_delta = (gyro_scaled_x * self.time_diff)
+            gyro_y_delta = (gyro_scaled_y * self.time_diff)
+
+            self.gyro_total_x += gyro_x_delta
+            self.gyro_total_y += gyro_y_delta
+
+            rotation_x = self.get_x_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
+            rotation_y = self.get_y_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
 
             data = {
-               "lean_x": accel_xout,
-               "lean_y": accel_yout,
-               "lean_z": accel_zout,
-               "gforce_x": gyro_xout / 1024,
-               "gforce_y": gyro_xout / 1024,
-               "gforce_z": gyro_zout / 1024,
+               "lean_x": round(rotation_x, 2),
+               "lean_y": round(rotation_y, 2),
+               "lean_z": 0,
+               "gforce_x": round(accel_scaled_x, 2),
+               "gforce_y": round(accel_scaled_y, 2),
+               "gforce_z": 0,
                "compass": math.degrees(bearing)
             }
 
             self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
-            time.sleep(0.05)
-         except Exception, e:
-            time.sleep(0.2)
+            #time.sleep(0.05)
+         except IOError:
+            time.sleep(0.01)
             pass
 
    def stop(self):

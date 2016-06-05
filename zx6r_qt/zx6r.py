@@ -34,6 +34,8 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
+      os.system("sudo killall pigpiod && sudo pigpiod &")
+
       self.KDSThread = KDSThread()
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
       self.GPSThread = GPSThread()
@@ -148,7 +150,7 @@ class MainWindow(QtGui.QMainWindow):
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_gyros.setText(str(round(self.lean_x, 2)))
-         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_y, 2)))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_x, 2)))
          self.ui.labelStatus_heading.setText(str(self.compass))
 
 
