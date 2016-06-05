@@ -4,6 +4,8 @@ import smbus
 import math
 import time
 import sqlite3
+import pigpio
+
 from datetime import datetime
 from gps import *
 from PyQt4 import QtCore
@@ -128,8 +130,9 @@ class DataRecordThread(QtCore.QThread):
 
 
 
+
 class KDSThread(QtCore.QThread):
-   def __init__(self, KDSSerial = '/dev/ttyKDS'):
+   def __init__(self, KDSSerial = 18):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.KDSSerial = KDSSerial
@@ -137,25 +140,24 @@ class KDSThread(QtCore.QThread):
    def run(self):
       self.stopped = 0
 
-      self.serialKDS = serial.Serial(
-         port=self.KDSSerial,
-         baudrate=19200,
-         parity=serial.PARITY_NONE,
-         stopbits=serial.STOPBITS_ONE,
-         bytesize=serial.EIGHTBITS,
-         timeout=None)
+      self.serialKDS = pigpio.pi()
+      self.serialKDS.set_mode(self.KDSSerial, pigpio.INPUT)
+      self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
 
       while True:
          if self.stopped:
-            self.serialKDS.close()
+            self.serialKDS.bb_serial_read_close(self.KDSSerial)
+            self.serialKDS.stop()
             break
 
-         if self.serialKDS.inWaiting():
-            str = self.serialKDS.readline()
+         (count, str) = self.serialKDS.bb_serial_read(self.KDSSerial)
+         if count:
             parts = str.replace("\n", "").split(", ")
             if len(parts) == 3:
                data = {"rpm": parts[0], "kph": parts[1], "gear": parts[2]}
                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+
+         time.sleep(0.05)
 
    def setPort(self, port):
       self.KDSSerial = port
@@ -166,6 +168,46 @@ class KDSThread(QtCore.QThread):
    def isRunning(self):
       return self.stopped == 0
 
+
+'''
+      class KDSThread(QtCore.QThread):
+         def __init__(self, KDSSerial = '/dev/ttyKDS'):
+            QtCore.QThread.__init__(self)
+            self.stopped = 1
+            self.KDSSerial = KDSSerial
+
+         def run(self):
+            self.stopped = 0
+
+            self.serialKDS = serial.Serial(
+               port=self.KDSSerial,
+               baudrate=19200,
+               parity=serial.PARITY_NONE,
+               stopbits=serial.STOPBITS_ONE,
+               bytesize=serial.EIGHTBITS,
+               timeout=None)
+
+            while True:
+               if self.stopped:
+                  self.serialKDS.close()
+                  break
+
+               if self.serialKDS.inWaiting():
+                  str = self.serialKDS.readline()
+                  parts = str.replace("\n", "").split(", ")
+                  if len(parts) == 3:
+                     data = {"rpm": parts[0], "kph": parts[1], "gear": parts[2]}
+                     self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+
+         def setPort(self, port):
+            self.KDSSerial = port
+
+         def stop(self):
+            self.stopped = 1
+
+         def isRunning(self):
+            return self.stopped == 0
+'''
 
 
 class GPSThread(QtCore.QThread):

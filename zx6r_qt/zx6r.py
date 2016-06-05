@@ -34,7 +34,7 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
-      self.KDSThread = KDSThread(settings["KDSSerialPort"])
+      self.KDSThread = KDSThread()
       self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
@@ -117,6 +117,7 @@ class MainWindow(QtGui.QMainWindow):
       self.rpm = data["rpm"]
       self.kph = data["kph"]
       self.gear = data["gear"]
+      print data
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_rpm.setText(str(self.rpm))
