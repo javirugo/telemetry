@@ -117,7 +117,6 @@ class MainWindow(QtGui.QMainWindow):
       self.rpm = data["rpm"]
       self.kph = data["kph"]
       self.gear = data["gear"]
-      print data
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_rpm.setText(str(self.rpm))
