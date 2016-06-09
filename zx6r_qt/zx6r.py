@@ -7,9 +7,13 @@ import glob
 from PyQt4 import QtGui, QtCore
 import mainwindow
 
-from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
-#from threads import DataRecordThread
-#from mocks import KDSThread, GPSThread, I2CThread
+useMock = False
+
+if useMock:
+   from threads import DataRecordThread
+   from mocks import KDSThread, GPSThread, I2CThread
+else:
+   from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
 
 settings = {
   "start_raspi": "/picam/start.sh",
@@ -59,7 +63,6 @@ class MainWindow(QtGui.QMainWindow):
       self.speed = 0
       self.rpm = 0
       self.gear = 0
-      self.kph = 0
       self.lean_x = 0
       self.lean_y = 0
       self.lean_z = 0
@@ -91,6 +94,16 @@ class MainWindow(QtGui.QMainWindow):
          self.KDSThread.stop()
          self.GPSThread.stop()
          self.I2CThread.stop()
+         self.ui.progressBarRPM.setValue(0)
+         self.ui.dialLean.setValue(180)
+         self.ui.lcdRPM.display(0)
+         self.ui.lcdGear.display(0)
+         self.ui.labelStatus_lat.setText("latitude")
+         self.ui.labelStatus_lon.setText("longitude")
+         self.ui.labelStatus_speed.setText("speed")
+         self.ui.labelStatus_gyros.setText("degrees")
+         self.ui.labelStatus_accelerometer.setText("0 to 2 g")
+         self.ui.labelStatus_heading.setText("heading")
 
 
    # Called from the DataRecordThread when a lap is finished
@@ -117,13 +130,12 @@ class MainWindow(QtGui.QMainWindow):
    # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
       self.rpm = data["rpm"]
-      self.kph = data["kph"]
       self.gear = data["gear"]
 
       if self.ui.pbLiveStatus.isChecked():
-         self.ui.labelStatus_rpm.setText(str(self.rpm))
-         self.ui.labelStatus_kph.setText(str(self.kph))
-         self.ui.labelStatus_gear.setText(str(self.gear))
+         self.ui.lcdRPM.display(self.rpm)
+         self.ui.lcdGear.display(self.gear)
+         self.ui.progressBarRPM.setValue(self.rpm)
 
 
    # Called from the GPSThread when new data is received from GPS
@@ -135,7 +147,7 @@ class MainWindow(QtGui.QMainWindow):
       if self.ui.pbLiveStatus.isChecked():
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
-         self.ui.labelStatus_speed.setText(str(self.speed))
+         self.ui.labelStatus_speed.setText("%s kph" % str(self.speed))
 
 
    # Called from the I2CThread when new data is available on I2C
@@ -149,6 +161,7 @@ class MainWindow(QtGui.QMainWindow):
       self.compass = data["compass"]
 
       if self.ui.pbLiveStatus.isChecked():
+         self.ui.dialLean.setValue(round(self.lean_x + 180))
          self.ui.labelStatus_gyros.setText(str(round(self.lean_x, 2)))
          self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_x, 2)))
          self.ui.labelStatus_heading.setText(str(self.compass))
@@ -205,9 +218,12 @@ class MainWindow(QtGui.QMainWindow):
 
 app = QtGui.QApplication(sys.argv)
 my_mainWindow = MainWindow(settings)
-QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
-#my_mainWindow.show()
-my_mainWindow.showFullScreen()
+
+if useMock:
+   my_mainWindow.show()
+else:
+   QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+   my_mainWindow.showFullScreen()
 
 sys.exit(app.exec_())
 

@@ -1,4 +1,3 @@
-
 #include "KDSPort.h"
 
 // Constructor
@@ -223,6 +222,7 @@ void KDSPort::loop()
       // Start KDS comms
       delay(2000);
       this->setup();
+      return;
    }
    else
    {
@@ -259,7 +259,7 @@ void KDSPort::loop()
       if (this->gearCounter == 8)
       {
          // Gear
-         delay(this->ISORequestDelay + 5);
+         delay(this->ISORequestDelay);
          this->gearCounter = 0;
 	      for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
 	      cmdBuf[1] = 0x0B;
@@ -281,7 +281,7 @@ void KDSPort::loop()
          this->gearCounter++;
       }
 
-
+      /*
       if (this->kphCounter == 5)
       {
          // Speed
@@ -305,6 +305,7 @@ void KDSPort::loop()
       {
          this->kphCounter++;
       }
+      */
    }
 }
 

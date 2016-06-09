@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>318</width>
-    <height>238</height>
+    <width>478</width>
+    <height>319</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,25 +25,30 @@ QWidget { background-color: #262424; color: white; font-size: 12px; }
 
 QPushButton { background-color: black; color: white; border: 1px solid #4A4646; }
 
-QTabBar::tab { min-width: 56px; font-weight: normal; color: #DC3434; padding: 10px 22px; border: 0; background-color: black; }
+QTabBar::tab { min-width: 185px; font-weight: normal; color: #DC3434; padding: 10px 22px; border: 0; background-color: black; font-size: 18px; }
 
 QTabBar::tab:selected { font-weight: bold; background-color: #4A585D; color: #85F187; }
 
 QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: #3E3E3E;}
 
-#labelBestLapTime, #labelLastLapTime { font-size: 40px; font-weight: bold; }
+#labelBestLapTime, #labelLastLapTime { font-size: 50px; font-weight: bold; }
+
+#labelLastLap, #labelBestLap { font-size: 16px; font-weight: bold; }
 
 #labelBestLapTime {color: #24A523; }
 #labelLastLapTime {color: #9098A9; }
 
-#tabStatus QLabel { padding: 4px 2px;  qproperty-alignment: AlignCenter; background-color: black; font-size: 11px; }
+#tabStatus QLabel { padding: 4px 2px;  qproperty-alignment: AlignCenter; background-color: black; font-size: 14px; }
 
-#pbRecord {  border-style: solid; border-width: 3px; border-color: #585858; border-radius: 8px; }
+#pbRecord {  border-style: solid; border-width: 3px; border-color: #585858; border-radius: 8px; font-size: 26px; font-weight: bold;}
 
 #pbLiveStatus { font-size: 20px; font-weight: bold; border-radius: 8px; background-color: #463535; color: #AB0A0A; }
 #pbLiveStatus:checked { background-color: #164321; color: #1B5028; }
 
-#pbShutdown, #pbReboot { border-radius: 4px; color: #D5A6A6; }</string>
+#pbShutdown, #pbReboot { border-radius: 4px; color: #D5A6A6; }
+
+#progressBarRPM { background-color: black; }
+#progressBarRPM::chunk { background: #C6D0CE; }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -57,9 +62,6 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
       </property>
       <property name="tabPosition">
        <enum>QTabWidget::North</enum>
-      </property>
-      <property name="tabShape">
-       <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
        <number>0</number>
@@ -77,10 +79,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QPushButton" name="pbRecord">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>271</width>
-          <height>41</height>
+          <x>20</x>
+          <y>20</y>
+          <width>411</width>
+          <height>61</height>
          </rect>
         </property>
         <property name="focusPolicy">
@@ -93,10 +95,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelLastLapTime">
         <property name="geometry">
          <rect>
-          <x>40</x>
-          <y>70</y>
-          <width>241</width>
-          <height>41</height>
+          <x>80</x>
+          <y>95</y>
+          <width>341</width>
+          <height>71</height>
          </rect>
         </property>
         <property name="text">
@@ -109,10 +111,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelBestLap">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>140</y>
-          <width>41</width>
-          <height>16</height>
+          <x>10</x>
+          <y>200</y>
+          <width>61</width>
+          <height>21</height>
          </rect>
         </property>
         <property name="text">
@@ -125,10 +127,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelLastLap">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>80</y>
-          <width>41</width>
-          <height>16</height>
+          <x>10</x>
+          <y>120</y>
+          <width>61</width>
+          <height>21</height>
          </rect>
         </property>
         <property name="text">
@@ -141,10 +143,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelBestLapTime">
         <property name="geometry">
          <rect>
-          <x>40</x>
-          <y>130</y>
-          <width>241</width>
-          <height>41</height>
+          <x>80</x>
+          <y>175</y>
+          <width>341</width>
+          <height>71</height>
          </rect>
         </property>
         <property name="text">
@@ -159,26 +161,13 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <attribute name="title">
         <string>Status</string>
        </attribute>
-       <widget class="QLabel" name="labelStatusGPS">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>71</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>GPS</string>
-        </property>
-       </widget>
        <widget class="QLabel" name="labelStatusGyroscope">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>260</x>
           <y>60</y>
           <width>70</width>
-          <height>26</height>
+          <height>31</height>
          </rect>
         </property>
         <property name="text">
@@ -188,62 +177,49 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatusAccelerometer">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>90</y>
-          <width>70</width>
-          <height>26</height>
+          <x>20</x>
+          <y>130</y>
+          <width>91</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
          <string>GForce</string>
         </property>
        </widget>
-       <widget class="QLabel" name="labelStatusKDS">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>120</y>
-          <width>70</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>KDS</string>
-        </property>
-       </widget>
        <widget class="QLabel" name="labelStatus_lat">
         <property name="geometry">
          <rect>
-          <x>71</x>
-          <y>0</y>
-          <width>81</width>
-          <height>26</height>
+          <x>10</x>
+          <y>10</y>
+          <width>161</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
-         <string>lat</string>
+         <string>latitude</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelStatus_lon">
         <property name="geometry">
          <rect>
-          <x>152</x>
-          <y>0</y>
-          <width>81</width>
-          <height>26</height>
+          <x>170</x>
+          <y>10</y>
+          <width>161</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
-         <string>lon</string>
+         <string>longitude</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelStatus_gyros">
         <property name="geometry">
          <rect>
-          <x>70</x>
-          <y>60</y>
-          <width>223</width>
-          <height>26</height>
+          <x>260</x>
+          <y>160</y>
+          <width>71</width>
+          <height>31</height>
          </rect>
         </property>
         <property name="text">
@@ -253,49 +229,23 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatus_accelerometer">
         <property name="geometry">
          <rect>
-          <x>70</x>
-          <y>90</y>
-          <width>223</width>
-          <height>26</height>
+          <x>110</x>
+          <y>130</y>
+          <width>111</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
-         <string>raw</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="labelStatus_rpm">
-        <property name="geometry">
-         <rect>
-          <x>70</x>
-          <y>120</y>
-          <width>101</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>rpm</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="labelStatus_gear">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>120</y>
-          <width>43</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>gear</string>
+         <string>0 to 2 g</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelStatusCompass">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>30</y>
-          <width>70</width>
-          <height>26</height>
+          <x>19</x>
+          <y>90</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
@@ -305,10 +255,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatus_heading">
         <property name="geometry">
          <rect>
-          <x>70</x>
-          <y>30</y>
-          <width>223</width>
-          <height>26</height>
+          <x>100</x>
+          <y>90</y>
+          <width>121</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
@@ -318,22 +268,22 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatus_speed">
         <property name="geometry">
          <rect>
-          <x>232</x>
-          <y>0</y>
-          <width>61</width>
-          <height>26</height>
+          <x>330</x>
+          <y>10</y>
+          <width>111</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
-         <string>kph</string>
+         <string>speed</string>
         </property>
        </widget>
        <widget class="QPushButton" name="pbReboot">
         <property name="geometry">
          <rect>
-          <x>230</x>
-          <y>148</y>
-          <width>63</width>
+          <x>362</x>
+          <y>230</y>
+          <width>91</width>
           <height>31</height>
          </rect>
         </property>
@@ -348,8 +298,8 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
         <property name="geometry">
          <rect>
           <x>2</x>
-          <y>148</y>
-          <width>71</width>
+          <y>230</y>
+          <width>91</width>
           <height>31</height>
          </rect>
         </property>
@@ -363,10 +313,10 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QPushButton" name="pbLiveStatus">
         <property name="geometry">
          <rect>
-          <x>80</x>
-          <y>148</y>
-          <width>144</width>
-          <height>31</height>
+          <x>100</x>
+          <y>220</y>
+          <width>255</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="focusPolicy">
@@ -379,24 +329,85 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
          <bool>true</bool>
         </property>
        </widget>
-       <widget class="QLabel" name="labelStatus_kph">
+       <widget class="QProgressBar" name="progressBarRPM">
         <property name="geometry">
          <rect>
-          <x>170</x>
-          <y>120</y>
-          <width>81</width>
-          <height>26</height>
+          <x>390</x>
+          <y>60</y>
+          <width>41</width>
+          <height>101</height>
          </rect>
         </property>
-        <property name="text">
-         <string>kph</string>
+        <property name="maximum">
+         <number>16000</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+        <property name="textVisible">
+         <bool>false</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
        </widget>
-      </widget>
-      <widget class="QWidget" name="tabLaps">
-       <attribute name="title">
-        <string>Tools</string>
-       </attribute>
+       <widget class="QDial" name="dialLean">
+        <property name="geometry">
+         <rect>
+          <x>260</x>
+          <y>90</y>
+          <width>71</width>
+          <height>64</height>
+         </rect>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="maximum">
+         <number>360</number>
+        </property>
+        <property name="value">
+         <number>180</number>
+        </property>
+        <property name="tracking">
+         <bool>false</bool>
+        </property>
+        <property name="wrapping">
+         <bool>false</bool>
+        </property>
+        <property name="notchTarget">
+         <double>20.000000000000000</double>
+        </property>
+        <property name="notchesVisible">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLCDNumber" name="lcdGear">
+        <property name="geometry">
+         <rect>
+          <x>396</x>
+          <y>190</y>
+          <width>31</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="numDigits">
+         <number>1</number>
+        </property>
+       </widget>
+       <widget class="QLCDNumber" name="lcdRPM">
+        <property name="geometry">
+         <rect>
+          <x>380</x>
+          <y>160</y>
+          <width>64</width>
+          <height>23</height>
+         </rect>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>

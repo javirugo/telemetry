@@ -4,7 +4,6 @@ import smbus
 import math
 import time
 import sqlite3
-import pigpio
 
 from datetime import datetime
 from gps import *
@@ -18,7 +17,7 @@ class DataRecordThread(QtCore.QThread):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.mainWin = mainwin
-      self.laptimer = Laptimer("/home/jaruiz/telemetry/tracks/ALMERIA.json")
+      self.laptimer = Laptimer("../tracks/ALMERIA.json")
       self.last_lap_id = 0
       self.last_sector_idlap = 0
       self.last_sector_start = 0
@@ -27,7 +26,7 @@ class DataRecordThread(QtCore.QThread):
       self.last_lap_time = 0
       self.lap_start_time = 0
       
-      self.db = sqlite3.connect('/home/jaruiz/telemetry/zx6r_qt/data.db')
+      self.db = sqlite3.connect('data.db')
       cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
       all_laps = cur.fetchall()
       self.last_lap_time, self.fastest_lap_time = self.laptimer.loadHistory(all_laps)
@@ -46,7 +45,7 @@ class DataRecordThread(QtCore.QThread):
       self.last_sector_start = 0
       self.lap_start_time = 0
 
-      self.db = sqlite3.connect('/home/jaruiz/telemetry/zx6r_qt/data.db')
+      self.db = sqlite3.connect('data.db')
       cur = self.db.cursor()
 
       cur.execute("INSERT INTO round(start, video) values(%s, %s)" % (
@@ -133,6 +132,7 @@ class DataRecordThread(QtCore.QThread):
 
 class KDSThread(QtCore.QThread):
    def __init__(self, KDSSerial = 18):
+      import pigpio
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.KDSSerial = KDSSerial

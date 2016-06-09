@@ -57,7 +57,7 @@ class GPSThread(QtCore.QThread):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.currentIndex = 0
-      trackfile = "/home/jaruiz/telemetry/tracks/ALMERIA.json"
+      trackfile = "../tracks/ALMERIA.json"
       with open(trackfile) as track_file:
          track_data = json.load(track_file)
          self.gpsdata = track_data["MOCK"]
