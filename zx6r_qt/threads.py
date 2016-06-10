@@ -61,7 +61,7 @@ class DataRecordThread(QtCore.QThread):
 
          insert_query = ("INSERT INTO data(id_round, datetime, latitude, longitude, speed, "
             "rpm, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
-            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime,
                self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
