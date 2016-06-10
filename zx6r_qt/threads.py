@@ -63,7 +63,7 @@ class DataRecordThread(QtCore.QThread):
             "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime,
                self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
-               int(self.mainWin.rpm), int(self.mainWin.kph), int(self.mainWin.gear),
+               int(self.mainWin.rpm), 0, int(self.mainWin.gear),
                self.mainWin.lean_x, self.mainWin.lean_y, self.mainWin.lean_z,
                self.mainWin.gforce_x, self.mainWin.gforce_y, self.mainWin.gforce_z,
                self.mainWin.compass))
@@ -153,7 +153,7 @@ class KDSThread(QtCore.QThread):
          if count:
             parts = str.replace("\n", "").split(", ")
             if len(parts) == 3:
-               data = {"rpm": parts[0], "kph": parts[1], "gear": parts[2]}
+               data = {"rpm": parts[0], "gear": parts[1]}
                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
          time.sleep(0.05)
