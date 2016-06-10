@@ -4,6 +4,7 @@ import smbus
 import math
 import time
 import sqlite3
+import pigpio
 
 from datetime import datetime
 from gps import *
@@ -132,7 +133,6 @@ class DataRecordThread(QtCore.QThread):
 
 class KDSThread(QtCore.QThread):
    def __init__(self, KDSSerial = 18):
-      import pigpio
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.KDSSerial = KDSSerial
