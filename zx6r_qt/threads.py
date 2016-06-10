@@ -59,11 +59,11 @@ class DataRecordThread(QtCore.QThread):
          point_datetime = (point_datetime_obj - datetime(1970, 1, 1)).total_seconds()
 
          insert_query = ("INSERT INTO data(id_round, datetime, latitude, longitude, speed, "
-            "rpm, kph, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
+            "rpm, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
             "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime,
                self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
-               int(self.mainWin.rpm), 0, int(self.mainWin.gear),
+               int(self.mainWin.rpm), int(self.mainWin.gear),
                self.mainWin.lean_x, self.mainWin.lean_y, self.mainWin.lean_z,
                self.mainWin.gforce_x, self.mainWin.gforce_y, self.mainWin.gforce_z,
                self.mainWin.compass))
