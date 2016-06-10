@@ -129,8 +129,9 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
-      self.rpm = data["rpm"]
-      self.gear = data["gear"]
+      if self.rpm != 0 and self.gear != 0:
+         self.rpm = data["rpm"]
+         self.gear = data["gear"]
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.lcdRPM.display(self.rpm)

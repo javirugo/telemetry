@@ -40,6 +40,8 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
 
 #tabStatus QLabel { padding: 4px 2px;  qproperty-alignment: AlignCenter; background-color: black; font-size: 14px; }
 
+#tabStatus QLabel#labelStatusGyroscope, #tabStatus QLabel#labelStatusAccelerometer, #tabStatus QLabel#labelStatusCompass { background-color: #262424; }
+
 #pbRecord {  border-style: solid; border-width: 3px; border-color: #585858; border-radius: 8px; font-size: 26px; font-weight: bold;}
 
 #pbLiveStatus { font-size: 20px; font-weight: bold; border-radius: 8px; background-color: #463535; color: #AB0A0A; }
@@ -177,9 +179,9 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatusAccelerometer">
         <property name="geometry">
          <rect>
-          <x>20</x>
+          <x>30</x>
           <y>130</y>
-          <width>91</width>
+          <width>71</width>
           <height>41</height>
          </rect>
         </property>
@@ -217,9 +219,9 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
         <property name="geometry">
          <rect>
           <x>260</x>
-          <y>160</y>
+          <y>150</y>
           <width>71</width>
-          <height>31</height>
+          <height>41</height>
          </rect>
         </property>
         <property name="text">
@@ -229,9 +231,9 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QLabel" name="labelStatus_accelerometer">
         <property name="geometry">
          <rect>
-          <x>110</x>
+          <x>100</x>
           <y>130</y>
-          <width>111</width>
+          <width>121</width>
           <height>41</height>
          </rect>
         </property>
@@ -408,6 +410,22 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
          </rect>
         </property>
        </widget>
+       <zorder>dialLean</zorder>
+       <zorder>labelStatusGyroscope</zorder>
+       <zorder>labelStatusAccelerometer</zorder>
+       <zorder>labelStatus_lat</zorder>
+       <zorder>labelStatus_lon</zorder>
+       <zorder>labelStatus_accelerometer</zorder>
+       <zorder>labelStatusCompass</zorder>
+       <zorder>labelStatus_heading</zorder>
+       <zorder>labelStatus_speed</zorder>
+       <zorder>pbReboot</zorder>
+       <zorder>pbShutdown</zorder>
+       <zorder>pbLiveStatus</zorder>
+       <zorder>progressBarRPM</zorder>
+       <zorder>lcdGear</zorder>
+       <zorder>lcdRPM</zorder>
+       <zorder>labelStatus_gyros</zorder>
       </widget>
      </widget>
     </item>

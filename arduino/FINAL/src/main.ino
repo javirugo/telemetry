@@ -28,7 +28,6 @@ void loop()
    //gforce = gy;
 
    SoftSer.print(KDSThread.getRPM()); SoftSer.print(", ");
-   SoftSer.print(KDSThread.getKPH()); SoftSer.print(", ");
    SoftSer.print(KDSThread.getGear()); SoftSer.print("\n");
    // SoftSer.print(degrees_x); SoftSer.print(", ");
    // SoftSer.print(gforce); SoftSer.print("\n");
