@@ -164,7 +164,7 @@ class MainWindow(QtGui.QMainWindow):
          self.ui.dialLean.setValue(round(self.lean_x + 180))
          self.ui.labelStatus_gyros.setText(str(round(self.lean_x, 2)))
          self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_x, 2)))
-         self.ui.labelStatus_heading.setText(str(self.compass))
+         self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
 
 
    # This is called with a small delay from the record-switch method to allow picam
