@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 ser = serial.Serial(
-    port='/dev/ttyAMA0',\
+    port='/dev/ttyS0',\
     baudrate=57600,\
 #    baudrate=19200,\
     parity=serial.PARITY_NONE,\

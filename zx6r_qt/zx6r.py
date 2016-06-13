@@ -129,7 +129,7 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the KDSThread when new data is received from KDS
    def updateKDS(self, data):
-      if self.rpm != 0 and self.gear != 0:
+      if data["rpm"] != 0 or data["gear"] != 0:
          self.rpm = data["rpm"]
          self.gear = data["gear"]
 

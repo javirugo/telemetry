@@ -142,6 +142,8 @@ class KDSThread(QtCore.QThread):
       self.serialKDS = pigpio.pi()
       self.serialKDS.set_mode(self.KDSSerial, pigpio.INPUT)
       self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
+      self.rpm = 0
+      self.gear = 0
 
       while True:
          if self.stopped:
@@ -152,11 +154,17 @@ class KDSThread(QtCore.QThread):
          (count, str) = self.serialKDS.bb_serial_read(self.KDSSerial)
          if count:
             parts = str.replace("\n", "").split(", ")
-            if len(parts) == 3:
-               data = {"rpm": parts[0], "gear": parts[1]}
+            if len(parts) == 2:
+               try: self.rpm = int(parts[0])
+               except ValueError: pass
+
+               try: self.gear = int(parts[1])
+               except ValueError: pass
+
+               data = {"rpm": self.rpm, "gear": self.gear}
                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
-         time.sleep(0.05)
+         time.sleep(0.06)
 
    def setPort(self, port):
       self.KDSSerial = port
