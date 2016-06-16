@@ -141,7 +141,8 @@ class KDSThread(QtCore.QThread):
       self.stopped = 0
       self.serialKDS = pigpio.pi()
       self.serialKDS.set_mode(self.KDSSerial, pigpio.INPUT)
-      self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
+      try: self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
+      except: pass
       self.rpm = 0
       self.gear = 0
 

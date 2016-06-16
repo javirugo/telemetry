@@ -70,9 +70,11 @@ class MainWindow(QtGui.QMainWindow):
       self.gforce_y = 0
       self.gforce_z = 0
       self.compass = 0
-      
 
-   # If anything goes wrong, click the "reboot" button!
+      self.lean_correction = -3
+      self.gforce_correction = 0.05
+
+   # If anything goes wrong, click the "reboot" button! 
    # https://www.youtube.com/watch?v=PtXtIivRRKQ
    def reboot(self):
       os.system("sudo reboot")
@@ -132,6 +134,9 @@ class MainWindow(QtGui.QMainWindow):
       if data["rpm"] != 0 or data["gear"] != 0:
          self.rpm = data["rpm"]
          self.gear = data["gear"]
+      else:
+         self.rpm = 0
+         self.gear = 0
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.lcdRPM.display(self.rpm)
@@ -153,7 +158,8 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the I2CThread when new data is available on I2C
    def updateI2C(self, data):
-      self.lean_x = data["lean_x"]
+      self.lean_x = round((data["lean_x"] + self.lean_correction) * -1)
+      #self.lean_x = data["lean_x"]
       self.lean_y = data["lean_y"]
       self.lean_z = data["lean_z"]
       self.gforce_x = data["gforce_x"]
@@ -162,9 +168,9 @@ class MainWindow(QtGui.QMainWindow):
       self.compass = data["compass"]
 
       if self.ui.pbLiveStatus.isChecked():
-         self.ui.dialLean.setValue(round(self.lean_x + 180))
-         self.ui.labelStatus_gyros.setText(str(round(self.lean_x, 2)))
-         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_x, 2)))
+         self.ui.dialLean.setValue(self.lean_x + 180)
+         self.ui.labelStatus_gyros.setText(str(self.lean_x))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_y, 2) - self.gforce_correction))
          self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
 
 
