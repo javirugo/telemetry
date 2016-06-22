@@ -72,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
       self.compass = 0
 
       self.lean_correction = -3
-      self.gforce_correction = 0.05
+      self.gforce_correction = 0.24
 
    # If anything goes wrong, click the "reboot" button! 
    # https://www.youtube.com/watch?v=PtXtIivRRKQ
