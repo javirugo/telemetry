@@ -1,7 +1,7 @@
 //BMA180 triple axis accelerometer sample code//
 //www.geeetech.com//
 //
-#include <Wire.h> 
+#include <Wire.h>
 #define BMA180 0x40  //address of the accelerometer
 #define RESET 0x10   
 #define PWR 0x0D
