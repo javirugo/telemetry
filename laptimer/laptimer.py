@@ -1,20 +1,21 @@
 #!/usr/bin/python
 
-from mock_metrics import Metrics
+#from mock_metrics import Metrics
+from real_metrics import Metrics
 
 import json
 import time
 from datetime import datetime
 from shapely.geometry import Polygon, Point
 
-with open('ALMERIA.json') as track_file:
+with open('../tracks/ALMERIA.json') as track_file:
     track_data = json.load(track_file)
 
 START_POLY = Polygon([
-    (track_data["START"]["lat1"], track_data["START"]["lon1"]),
-    (track_data["START"]["lat2"], track_data["START"]["lon2"]),
     (track_data["START"]["lat3"], track_data["START"]["lon3"]),
-    (track_data["START"]["lat4"], track_data["START"]["lon4"])
+    (track_data["START"]["lat2"], track_data["START"]["lon2"]),
+    (track_data["START"]["lat4"], track_data["START"]["lon4"]),
+    (track_data["START"]["lat1"], track_data["START"]["lon1"])
 ])
 
 SECTOR2_POLY = Polygon([
@@ -25,14 +26,14 @@ SECTOR2_POLY = Polygon([
 ])
 
 SECTOR3_POLY = Polygon([
-    (track_data["SECTOR3"]["lat1"], track_data["SECTOR3"]["lon1"]),
-    (track_data["SECTOR3"]["lat2"], track_data["SECTOR3"]["lon2"]),
     (track_data["SECTOR3"]["lat3"], track_data["SECTOR3"]["lon3"]),
-    (track_data["SECTOR3"]["lat4"], track_data["SECTOR3"]["lon4"])
+    (track_data["SECTOR3"]["lat2"], track_data["SECTOR3"]["lon2"]),
+    (track_data["SECTOR3"]["lat4"], track_data["SECTOR3"]["lon4"]),
+    (track_data["SECTOR3"]["lat1"], track_data["SECTOR3"]["lon1"])
 ])
 
-metricsSource = Metrics()
-metricsSource.setMockData(track_data["MOCK"])
+metricsSource = Metrics("data_almeria_16jun.db")
+#metricsSource.setMockData(track_data["MOCK"])
 
 current_sector = 0
 current_lap = 0
@@ -43,8 +44,12 @@ LAPS = [{ "started": False, "ended": False,
 	    {"started": False, "ended": False},
 	    {"started": False, "ended": False},
 	    {"started": False, "ended": False} ]}]
+
 while True:
-    cur_ts, cur_lat, cur_lon = metricsSource.getMetrics()
+    metrics_data = metricsSource.getMetrics()
+    if not metrics_data: break
+
+    cur_ts, cur_lat, cur_lon = metrics_data
     current_point = Point(cur_lat, cur_lon)
 
     if current_point.within(START_POLY):
@@ -56,11 +61,12 @@ while True:
             LAPS[current_lap]["sectors"][2]["ended"] = cur_ts
 
             current_lap += 1
-	    LAPS.append({ "started": False, "ended": False,
+
+            LAPS.append({ "started": False, "ended": False,
 		      "sectors": [
-			{"started": False, "ended": False},
-			{"started": False, "ended": False},
-			{"started": False, "ended": False} ]})
+			      {"started": False, "ended": False},
+			      {"started": False, "ended": False},
+			      {"started": False, "ended": False} ]})
 
             LAPS[current_lap]["started"] = cur_ts
             LAPS[current_lap]["sectors"][0] = {"started": cur_ts, "ended": False}
@@ -88,15 +94,45 @@ while True:
     else:
         inside_poly = False
 
-    if len(LAPS) > 5:
-      break
-
 lap_no = 1
+best_sec1 = 999
+best_sec2 = 999
+best_sec3 = 999
 for lap in LAPS:
+
   if not lap["started"] or not lap["ended"]: continue
 
-  print "Lap %i: %s" % (lap_no, round((lap["ended"] - lap["started"]).total_seconds(), 3))
-  print "\tsec1: %s secs" % round((lap["sectors"][0]["ended"] - lap["sectors"][0]["started"]).total_seconds(), 3)
-  print "\tsec2: %s secs" % round((lap["sectors"][1]["ended"] - lap["sectors"][1]["started"]).total_seconds(), 3)
-  print "\tsec3: %s secs" % round((lap["sectors"][2]["ended"] - lap["sectors"][2]["started"]).total_seconds(), 3)
+  m, s = divmod((lap["ended"] - lap["started"]).total_seconds(), 60)
+  print "Lap %i: %02d:%05.2f" % (lap_no, m, s)
+  if lap["sectors"][0]["ended"] and lap["sectors"][0]["started"]:
+    sector_seconds = (lap["sectors"][0]["ended"] - lap["sectors"][0]["started"]).total_seconds()
+    m, s = divmod(sector_seconds, 60)
+    print "\tsec1: %02d:%05.2f" % (m, s)
+    if sector_seconds < best_sec1: best_sec1 = sector_seconds
+
+  if lap["sectors"][1]["ended"] and lap["sectors"][1]["started"]:
+    sector_seconds = (lap["sectors"][1]["ended"] - lap["sectors"][1]["started"]).total_seconds()
+    m, s = divmod(sector_seconds, 60)
+    print "\tsec2: %02d:%05.2f" % (m, s)
+    if sector_seconds < best_sec2: best_sec2 = sector_seconds
+
+  if lap["sectors"][2]["ended"] and lap["sectors"][2]["started"]:
+    sector_seconds = (lap["sectors"][2]["ended"] - lap["sectors"][2]["started"]).total_seconds()
+    m, s = divmod(sector_seconds, 60)
+    print "\tsec3: %02d:%05.2f" % (m, s)
+    if sector_seconds < best_sec3: best_sec3 = sector_seconds
+
   lap_no += 1
+
+potential_lap_seconds = best_sec1 + best_sec2 + best_sec3
+m, s = divmod(potential_lap_seconds, 60)
+print "\nBest Sectors (potential lap): %02d:%05.2f" % (m, s)
+
+m, s = divmod(best_sec1, 60)
+print "\tsector1: %02d:%05.2f" % (m, s)
+
+m, s = divmod(best_sec2, 60)
+print "\tsector2: %02d:%05.2f" % (m, s)
+
+m, s = divmod(best_sec3, 60)
+print "\tsector3: %02d:%05.2f" % (m, s)
