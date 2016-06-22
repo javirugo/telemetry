@@ -95,6 +95,7 @@ while True:
         inside_poly = False
 
 lap_no = 1
+best_lap = 999
 best_sec1 = 999
 best_sec2 = 999
 best_sec3 = 999
@@ -102,7 +103,11 @@ for lap in LAPS:
 
   if not lap["started"] or not lap["ended"]: continue
 
-  m, s = divmod((lap["ended"] - lap["started"]).total_seconds(), 60)
+  lap_time_seconds = (lap["ended"] - lap["started"]).total_seconds()
+  if lap_time_seconds > 150: continue
+  if lap_time_seconds < best_lap: best_lap = lap_time_seconds
+
+  m, s = divmod(lap_time_seconds, 60)
   print "Lap %i: %02d:%05.2f" % (lap_no, m, s)
   if lap["sectors"][0]["ended"] and lap["sectors"][0]["started"]:
     sector_seconds = (lap["sectors"][0]["ended"] - lap["sectors"][0]["started"]).total_seconds()
@@ -124,9 +129,13 @@ for lap in LAPS:
 
   lap_no += 1
 
+
+m, s = divmod(best_lap, 60)
+print "\n\nBEST LAP (REAL): %02d:%05.2f\n" % (m, s)
+
 potential_lap_seconds = best_sec1 + best_sec2 + best_sec3
 m, s = divmod(potential_lap_seconds, 60)
-print "\nBest Sectors (potential lap): %02d:%05.2f" % (m, s)
+print "Best Sectors (potential lap): %02d:%05.2f" % (m, s)
 
 m, s = divmod(best_sec1, 60)
 print "\tsector1: %02d:%05.2f" % (m, s)
@@ -135,4 +144,4 @@ m, s = divmod(best_sec2, 60)
 print "\tsector2: %02d:%05.2f" % (m, s)
 
 m, s = divmod(best_sec3, 60)
-print "\tsector3: %02d:%05.2f" % (m, s)
+print "\tsector3: %02d:%05.2f\n\n" % (m, s)
