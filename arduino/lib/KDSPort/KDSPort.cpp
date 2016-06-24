@@ -61,15 +61,15 @@ uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t 
   
   // Now send the command...
   for (uint8_t i = 0; i < bytesToSend; i++) {
-    bytesSent += Serial.write(buf[i]);
+    bytesSent += Serial2.write(buf[i]);
   }
   
   startTime = millis();
   
   // Wait for and deal with the reply
   while ((bytesRcvd <= maxLen) && ((millis() - startTime) < this->MAXSENDTIME)) {
-    if (Serial.available()) {
-      c = Serial.read();
+    if (Serial2.available()) {
+      c = Serial2.read();
       startTime = millis(); // reset the timer on each byte received
 
       rbuf[rCnt] = c;
@@ -158,9 +158,6 @@ uint8_t KDSPort::calcChecksum(uint8_t *data, uint8_t len) {
 
 void KDSPort::setup()
 {
-   this->kph = 0;
-   this->rpms = 0;
-
    pinMode(this->_pinTX, OUTPUT);
    pinMode(this->_pinRX, INPUT);
    
@@ -168,7 +165,7 @@ void KDSPort::setup()
    uint8_t req[2];
    uint8_t resp[3];
 
-   Serial.end();
+   Serial2.end();
 
    // This is the ISO 14230-2 "Fast Init" sequence.
    digitalWrite(this->_pinTX, HIGH);
@@ -178,12 +175,11 @@ void KDSPort::setup()
    digitalWrite(this->_pinTX, HIGH);
    delay(25);
 
-   Serial.begin(10400);
+   Serial2.begin(10400);
 
    // Start Communication is a single byte "0x81" packet.
    req[0] = 0x81;
    rLen = this->sendRequest(req, resp, 1, 3);
-
    delay(200);
 
    // Response should be 3 bytes: 0xC1 0xEA 0x8F
@@ -209,8 +205,10 @@ void KDSPort::setup()
 }
 
 
-void KDSPort::loop()
+bool KDSPort::loop(unsigned long start_millis)
 {
+   if ((unsigned long)(millis() - start_millis) < this->ISORequestDelay) return false;
+
    uint8_t cmdSize;
    uint8_t cmdBuf[6];
    uint8_t respSize;
@@ -220,47 +218,34 @@ void KDSPort::loop()
    if (!this->ECUconnected)
    {
       // Start KDS comms
-      delay(2000);
+      if ((unsigned long)(millis() - start_millis) < 2000) return false;
       this->setup();
-      return;
+      return true;
    }
    else
    {
-      // Send register requests
       cmdSize = 2; // each request is a 2 byte packet.
       cmdBuf[0] = 0x21; // Register request cmd
-      // Response to a register request is either:
-      // 0x61 - Register read OK
-      // 0x?? - Register requested
-      // 0x?? - Value byte 1
-      // ...  - (if more than 1 byte value - remainder of values)
-      // ___ or:
-      // 0x7F - Error response
-      // 0x21 - command (0x21 = Read register)
-      // 0x?? - error code (0x10 = General Reject: The service is rejected
-      //      but the server does not specify the reason of the rejection
-
-      // Grab RPMs
-      delay(this->ISORequestDelay);
-      for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
-      cmdBuf[1] = 0x09;
-      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
-      if (respSize == 4) {
-         // Formula for RPMs from response
-         this->rpms = respBuf[2] * 100 + respBuf[3];
-      }
-      else if (respSize == 0)
+      if (this->gearCounter < 8)
       {
-         this->rpms = 0;
-         this->ECUconnected = false;
-         return;
+         // Grab RPMs
+         for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
+         cmdBuf[1] = 0x09;
+         respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
+         if (respSize == 4) {
+            // Formula for RPMs from response
+            this->rpms = respBuf[2] * 100 + respBuf[3];
+         }
+         else if (respSize == 0)
+         {
+            this->rpms = 0;
+            this->ECUconnected = false;
+         }
+         this->gearCounter++;
       }
-
-      if (this->gearCounter == 8)
+      else
       {
-         // Gear
-         delay(this->ISORequestDelay);
-         this->gearCounter = 0;
+         // Grab Gear
 	      for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
 	      cmdBuf[1] = 0x0B;
 	      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
@@ -273,19 +258,14 @@ void KDSPort::loop()
          {
             this->gear = 0;
             this->ECUconnected = false;
-            return;
          }
-      }
-      else
-      {
-         this->gearCounter++;
+         this->gearCounter = 0;
       }
 
       /*
       if (this->kphCounter == 5)
       {
          // Speed
-         delay(this->ISORequestDelay + 5);
          this->kphCounter = 0;
          for (uint8_t i = 0; i < 5; i++) respBuf[i] = 0;
          cmdBuf[1] = 0x0C;
@@ -306,6 +286,7 @@ void KDSPort::loop()
          this->kphCounter++;
       }
       */
+      return true;
    }
 }
 

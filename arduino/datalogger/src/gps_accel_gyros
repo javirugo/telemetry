@@ -1,19 +1,13 @@
 
-// KDS Stuff
-#include <KDSPort.h>
-unsigned long start_millis;
-KDSPort KDSThread(16, 17);
-
-
-// GPS Stuff
 #include "Ublox.h"
+
 #define SERIAL_BAUD 115200
 #define M8N_BAUD 57600
 Ublox M8_Gps;
 
 
-// BMA80 (Accel)
 #include <Wire.h>
+
 #define BMA180 0x40  //address of the accelerometer
 #define BMA180_RESET 0x10   
 #define BMA180_PWR 0x0D
@@ -191,7 +185,7 @@ void setup()
    Wire.begin();
    AccelerometerInit();
    initGyro();
-   start_millis = millis();
+
 }
 
 
@@ -200,7 +194,6 @@ void loop()
    GPSRead();
    AccelerometerRead();
    GyroscopeRead();
-   if (KDSThread.loop(start_millis)) start_millis = millis();
 
    Serial.print(altitude, 6); Serial.print(", ");
    Serial.print(latitude, 6); Serial.print(", ");
@@ -215,9 +208,7 @@ void loop()
    Serial.print(hx); Serial.print(", ");
    Serial.print(hy); Serial.print(", ");
    Serial.print(hz); Serial.print(", ");
-   Serial.print(turetemp); Serial.print(", ");
-   Serial.print(KDSThread.getRPM()); Serial.print(", ");
-   Serial.print(KDSThread.getGear());
+   Serial.print(turetemp);
    Serial.println("");
 }
 
