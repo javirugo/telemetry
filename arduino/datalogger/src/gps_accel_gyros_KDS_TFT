@@ -1,13 +1,8 @@
-// SD
-#include <SPI.h>
-#include <SD.h>
-const int chipSelect = 8;
-File dataFile;
 
-/*
 // TFT
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
+#include <SPI.h>
 
 #define TFT_CS     10
 #define TFT_RST    0
@@ -15,7 +10,7 @@ File dataFile;
 #define ST7735_GREEN 0x07E0
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 float p = 3.1415926;
-*/
+
 
 // KDS Stuff
 #include <KDSPort.h>
@@ -62,13 +57,33 @@ float speed = 0;
 float gforce_x = 0;
 float gforce_y = 0;
 float gforce_z = 0;
-float xAngle = 0;
-float yAngle = 0;
-float zAngle = 0;
+double xAngle = 0;
+double yAngle = 0;
+double zAngle = 0;
 int hx = 0;
 int hy = 0;
 int hz = 0;
 int turetemp = 0;
+uint16_t rpm = 0;
+uint8_t gear = 0;
+
+// Data variables (old, for TFT)
+float old_altitude = 0;
+float old_latitude = 0;
+float old_longitude = 0;
+float old_speed = 0;
+float old_gforce_x = 0;
+float old_gforce_y = 0;
+float old_gforce_z = 0;
+double old_xAngle = 0;
+double old_yAngle = 0;
+double old_zAngle = 0;
+int old_hx = 0;
+int old_hy = 0;
+int old_hz = 0;
+int old_turetemp = 0;
+uint16_t old_rpm = 0;
+uint8_t old_gear = 0;
 
 
 void initGyro()
@@ -200,47 +215,61 @@ void GPSRead()
    }
 }
 
-void SDInit()
+
+void TFTInit()
 {
-   pinMode(SS, OUTPUT);
-   SD.begin(chipSelect);
+   tft.initR(INITR_BLACKTAB);   // initialize a ST7735S chip, black tab
+   tft.fillScreen(ST7735_BLACK);
+   tft.setTextWrap(false);
+   tft.setRotation(3);
 }
 
 
-void SDWrite()
+void clearTFT()
 {
-   dataFile = SD.open("datalog.txt", FILE_WRITE);
-   dataFile.print(altitude, 6); dataFile.print(", ");
-   dataFile.print(latitude, 6); dataFile.print(", ");
-   dataFile.print(longitude, 6); dataFile.print(", ");
-   dataFile.print(speed); dataFile.print(", ");
-   dataFile.print(gforce_x); dataFile.print(", ");
-   dataFile.print(gforce_y); dataFile.print(", ");
-   dataFile.print(gforce_z); dataFile.print(", ");
-   dataFile.print(xAngle); dataFile.print(", ");
-   dataFile.print(yAngle); dataFile.print(", ");
-   dataFile.print(zAngle); dataFile.print(", ");
-   dataFile.print(hx); dataFile.print(", ");
-   dataFile.print(hy); dataFile.print(", ");
-   dataFile.print(hz); dataFile.print(", ");
-   dataFile.print(turetemp); dataFile.print(", ");
-   dataFile.print(KDSThread.getRPM()); dataFile.print(", ");
-   dataFile.print(KDSThread.getGear());
-   dataFile.println("");
-   dataFile.close();
+   tft.setTextColor(ST7735_BLACK);
+
+   tft.setCursor(10, 10);
+   tft.print(old_gforce_x);
+
+   tft.setCursor(10, 20);
+   tft.print(old_gforce_y);
+
+   tft.setCursor(10, 30);
+   tft.print(old_gforce_y);
 }
+
+void printTFT()
+{
+   clearTFT();
+   tft.setTextColor(ST7735_GREEN);
+
+   tft.setCursor(10, 10);
+   tft.print(gforce_x);
+
+   tft.setCursor(10, 20);
+   tft.print(gforce_y);
+
+   tft.setCursor(10, 30);
+   tft.print(gforce_y);
+   
+   old_gforce_x = gforce_x;
+   old_gforce_y = gforce_y;
+   old_gforce_z = gforce_z;
+}
+
 
 
 void setup()
 {
-   // Serial.begin(SERIAL_BAUD);
+   Serial.begin(SERIAL_BAUD);
 
    Serial1.begin(M8N_BAUD);
 
    Wire.begin();
    AccelerometerInit();
    initGyro();
-   SDInit();
+   TFTInit();
    start_millis = millis();
 }
 
@@ -251,9 +280,11 @@ void loop()
    AccelerometerRead();
    GyroscopeRead();
    if (KDSThread.loop(start_millis)) start_millis = millis();
-   SDWrite();
+   rpm = KDSThread.getRPM();
+   gear = KDSThread.getGear();
+   
+   printTFT();
 
-   /*
    Serial.print(altitude, 6); Serial.print(", ");
    Serial.print(latitude, 6); Serial.print(", ");
    Serial.print(longitude, 6); Serial.print(", ");
@@ -271,6 +302,5 @@ void loop()
    Serial.print(rpm); Serial.print(", ");
    Serial.print(gear);
    Serial.println("");
-   */
 }
 

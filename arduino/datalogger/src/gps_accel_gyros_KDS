@@ -1,21 +1,3 @@
-// SD
-#include <SPI.h>
-#include <SD.h>
-const int chipSelect = 8;
-File dataFile;
-
-/*
-// TFT
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library
-
-#define TFT_CS     10
-#define TFT_RST    0
-#define TFT_DC     9
-#define ST7735_GREEN 0x07E0
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
-float p = 3.1415926;
-*/
 
 // KDS Stuff
 #include <KDSPort.h>
@@ -62,9 +44,9 @@ float speed = 0;
 float gforce_x = 0;
 float gforce_y = 0;
 float gforce_z = 0;
-float xAngle = 0;
-float yAngle = 0;
-float zAngle = 0;
+double xAngle = 0;
+double yAngle = 0;
+double zAngle = 0;
 int hx = 0;
 int hy = 0;
 int hz = 0;
@@ -200,47 +182,15 @@ void GPSRead()
    }
 }
 
-void SDInit()
-{
-   pinMode(SS, OUTPUT);
-   SD.begin(chipSelect);
-}
-
-
-void SDWrite()
-{
-   dataFile = SD.open("datalog.txt", FILE_WRITE);
-   dataFile.print(altitude, 6); dataFile.print(", ");
-   dataFile.print(latitude, 6); dataFile.print(", ");
-   dataFile.print(longitude, 6); dataFile.print(", ");
-   dataFile.print(speed); dataFile.print(", ");
-   dataFile.print(gforce_x); dataFile.print(", ");
-   dataFile.print(gforce_y); dataFile.print(", ");
-   dataFile.print(gforce_z); dataFile.print(", ");
-   dataFile.print(xAngle); dataFile.print(", ");
-   dataFile.print(yAngle); dataFile.print(", ");
-   dataFile.print(zAngle); dataFile.print(", ");
-   dataFile.print(hx); dataFile.print(", ");
-   dataFile.print(hy); dataFile.print(", ");
-   dataFile.print(hz); dataFile.print(", ");
-   dataFile.print(turetemp); dataFile.print(", ");
-   dataFile.print(KDSThread.getRPM()); dataFile.print(", ");
-   dataFile.print(KDSThread.getGear());
-   dataFile.println("");
-   dataFile.close();
-}
-
-
 void setup()
 {
-   // Serial.begin(SERIAL_BAUD);
+   Serial.begin(SERIAL_BAUD);
 
    Serial1.begin(M8N_BAUD);
 
    Wire.begin();
    AccelerometerInit();
    initGyro();
-   SDInit();
    start_millis = millis();
 }
 
@@ -251,9 +201,7 @@ void loop()
    AccelerometerRead();
    GyroscopeRead();
    if (KDSThread.loop(start_millis)) start_millis = millis();
-   SDWrite();
 
-   /*
    Serial.print(altitude, 6); Serial.print(", ");
    Serial.print(latitude, 6); Serial.print(", ");
    Serial.print(longitude, 6); Serial.print(", ");
@@ -268,9 +216,8 @@ void loop()
    Serial.print(hy); Serial.print(", ");
    Serial.print(hz); Serial.print(", ");
    Serial.print(turetemp); Serial.print(", ");
-   Serial.print(rpm); Serial.print(", ");
-   Serial.print(gear);
+   Serial.print(KDSThread.getRPM()); Serial.print(", ");
+   Serial.print(KDSThread.getGear());
    Serial.println("");
-   */
 }
 
