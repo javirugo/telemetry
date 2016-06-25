@@ -4,19 +4,6 @@
 const int chipSelect = 8;
 File dataFile;
 
-/*
-// TFT
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library
-
-#define TFT_CS     10
-#define TFT_RST    0
-#define TFT_DC     9
-#define ST7735_GREEN 0x07E0
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
-float p = 3.1415926;
-*/
-
 // KDS Stuff
 #include <KDSPort.h>
 unsigned long start_millis;
