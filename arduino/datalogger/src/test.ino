@@ -1,23 +1,25 @@
+// Debug mode?
+#define _DEBUG false
+
 // SD
 #include <SPI.h>
 #include <SD.h>
 const int chipSelect = 8;
 File dataFile;
+String logfile;
 
-// KDS Stuff
+// KDS
 #include <KDSPort.h>
-unsigned long start_millis;
+unsigned long kds_millis;
 KDSPort KDSThread(16, 17);
 
-
-// GPS Stuff
+// GPS
 #include "Ublox.h"
 #define SERIAL_BAUD 115200
 #define M8N_BAUD 57600
 Ublox M8_Gps;
 
-
-// BMA80 (Accel)
+// BMA180 (Accel)
 #include <Wire.h>
 #define BMA180 0x40  //address of the accelerometer
 #define BMA180_RESET 0x10   
@@ -28,7 +30,6 @@ Ublox M8_Gps;
 int BMA180_offx = 31;
 int BMA180_offy = 47; 
 int BMA180_offz = -23;
-
 
 // ITG3205 (Gyros)
 #define GYRO 0x68
@@ -41,7 +42,14 @@ int g_offx = 120;
 int g_offy = 20;
 int g_offz = 93;
 
+// BMP065 (barometer)
+#include <BMP085.h>
+BMP085 bmp085 = BMP085();
+long Pressure = 0;
+
+
 // Data variables
+unsigned long start_millis;
 float altitude = 0;
 float latitude = 0;
 float longitude = 0;
@@ -170,6 +178,16 @@ void readFrom(int DEVICE, byte address , int num ,byte buff[])
    Wire.endTransmission();         // end transmission
 }
 
+void BMP085Init()
+{
+   bmp085.init();
+}
+
+void BMP085Read()
+{
+   bmp085.getPressure(&Pressure);
+}
+
 
 void GPSRead()
 {
@@ -191,15 +209,34 @@ void SDInit()
 {
    pinMode(SS, OUTPUT);
    SD.begin(chipSelect);
+   char filename[10] = "data0.log";
+   for (int i = 0; i < 200; i++)
+   {
+      logfile = String("data") + String(i) + String(".log");
+      char filename[logfile.length() + 1];
+      logfile.toCharArray(filename, logfile.length() + 1);
+      if (!SD.exists(filename)) break;
+   }
+   
+   dataFile = SD.open(filename, FILE_WRITE);
+   dataFile.print("elapsed time, altitude, latitude, longitude, speed, gforce_x, ");
+   dataFile.print("gforce_y, gforce_z, angle_x, angle_y, angle_z, gyros_x, gyros_y, ");
+   dataFile.println("gyros_z, temp, pressure, rpm, gear");
 }
 
 
 void SDWrite()
 {
-   dataFile = SD.open("datalog.txt", FILE_WRITE);
-   dataFile.print(altitude, 6); dataFile.print(", ");
-   dataFile.print(latitude, 6); dataFile.print(", ");
-   dataFile.print(longitude, 6); dataFile.print(", ");
+   char filename[logfile.length() + 1];
+   logfile.toCharArray(filename, logfile.length() + 1);
+   dataFile = SD.open(filename, FILE_WRITE);
+
+   unsigned long elapsed_millis = (millis() - start_millis);
+   dataFile.print((elapsed_millis / 1000)); dataFile.print(".");
+   dataFile.print((elapsed_millis % 1000)); dataFile.print(", ");
+   dataFile.print(altitude); dataFile.print(", ");
+   dataFile.print(latitude); dataFile.print(", ");
+   dataFile.print(longitude); dataFile.print(", ");
    dataFile.print(speed); dataFile.print(", ");
    dataFile.print(gforce_x); dataFile.print(", ");
    dataFile.print(gforce_y); dataFile.print(", ");
@@ -211,6 +248,7 @@ void SDWrite()
    dataFile.print(hy); dataFile.print(", ");
    dataFile.print(hz); dataFile.print(", ");
    dataFile.print(turetemp); dataFile.print(", ");
+   dataFile.print(Pressure); dataFile.print(", ");
    dataFile.print(KDSThread.getRPM()); dataFile.print(", ");
    dataFile.print(KDSThread.getGear());
    dataFile.println("");
@@ -220,15 +258,17 @@ void SDWrite()
 
 void setup()
 {
-   // Serial.begin(SERIAL_BAUD);
+   if (_DEBUG) Serial.begin(SERIAL_BAUD);
+   else SDInit();
 
    Serial1.begin(M8N_BAUD);
-
    Wire.begin();
+
    AccelerometerInit();
+   BMP085Init();
    initGyro();
-   SDInit();
    start_millis = millis();
+   kds_millis = start_millis;
 }
 
 
@@ -237,27 +277,36 @@ void loop()
    GPSRead();
    AccelerometerRead();
    GyroscopeRead();
-   if (KDSThread.loop(start_millis)) start_millis = millis();
-   SDWrite();
-
-   /*
-   Serial.print(altitude, 6); Serial.print(", ");
-   Serial.print(latitude, 6); Serial.print(", ");
-   Serial.print(longitude, 6); Serial.print(", ");
-   Serial.print(speed); Serial.print(", ");
-   Serial.print(gforce_x); Serial.print(", ");
-   Serial.print(gforce_y); Serial.print(", ");
-   Serial.print(gforce_z); Serial.print(", ");
-   Serial.print(xAngle); Serial.print(", ");
-   Serial.print(yAngle); Serial.print(", ");
-   Serial.print(zAngle); Serial.print(", ");
-   Serial.print(hx); Serial.print(", ");
-   Serial.print(hy); Serial.print(", ");
-   Serial.print(hz); Serial.print(", ");
-   Serial.print(turetemp); Serial.print(", ");
-   Serial.print(rpm); Serial.print(", ");
-   Serial.print(gear);
-   Serial.println("");
-   */
+   BMP085Read();
+   if (KDSThread.loop(kds_millis)) kds_millis = millis();
+   
+   if (!_DEBUG)
+   {
+      SDWrite();
+   }
+   else
+   {
+      unsigned long elapsed_millis = (millis() - start_millis);
+      Serial.print((elapsed_millis / 1000)); Serial.print(".");
+      Serial.print((elapsed_millis % 1000)); Serial.print(", ");
+      Serial.print(altitude, 6); Serial.print(", ");
+      Serial.print(latitude, 6); Serial.print(", ");
+      Serial.print(longitude, 6); Serial.print(", ");
+      Serial.print(speed); Serial.print(", ");
+      Serial.print(gforce_x); Serial.print(", ");
+      Serial.print(gforce_y); Serial.print(", ");
+      Serial.print(gforce_z); Serial.print(", ");
+      Serial.print(xAngle); Serial.print(", ");
+      Serial.print(yAngle); Serial.print(", ");
+      Serial.print(zAngle); Serial.print(", ");
+      Serial.print(hx); Serial.print(", ");
+      Serial.print(hy); Serial.print(", ");
+      Serial.print(hz); Serial.print(", ");
+      Serial.print(turetemp); Serial.print(", ");
+      Serial.print(Pressure); Serial.print(", ");
+      Serial.print(KDSThread.getRPM()); Serial.print(", ");
+      Serial.print(KDSThread.getGear());
+      Serial.println("");
+   }
 }
 

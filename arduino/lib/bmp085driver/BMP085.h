@@ -31,7 +31,7 @@
 #ifndef BMP085_h
 #define BMP085_h
 
-#include "WProgram.h"
+#include "Arduino.h"
 
 #define BMP085_ADDR                 0x77     //0x77 default I2C address
 #define BUFFER_SIZE                 3
