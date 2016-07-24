@@ -14,7 +14,7 @@ class KDSPort
 
       const uint8_t ECUaddr = 0x11;
       const uint8_t myAddr = 0xF2;
-      const uint16_t MAXSENDTIME = 2000;
+      const uint16_t MAXSENDTIME = 1000;
 
       bool ECUconnected = false;
       uint16_t rpms = 0;

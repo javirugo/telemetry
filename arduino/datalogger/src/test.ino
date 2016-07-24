@@ -1,10 +1,10 @@
 // Debug mode?
-#define _DEBUG false
+#define _DEBUG true
 
 // SD
 #include <SPI.h>
 #include <SD.h>
-const int chipSelect = 8;
+const int chipSelect = 10;
 File dataFile;
 String logfile;
 
@@ -45,12 +45,15 @@ int g_offz = 93;
 // BMP065 (barometer)
 #include <BMP085.h>
 BMP085 bmp085 = BMP085();
-long Pressure = 0;
 
+// HMC5883 (compass)
+#include <HMC58X3.h>
+HMC58X3 magnetometer;
 
 // Data variables
 unsigned long start_millis;
 float altitude = 0;
+long altitude_bmp = 0;
 float latitude = 0;
 float longitude = 0;
 float speed = 0;
@@ -63,8 +66,10 @@ float zAngle = 0;
 int hx = 0;
 int hy = 0;
 int hz = 0;
-int turetemp = 0;
-
+int temperature = 0;
+long temp_bmp = 0;
+long pressure = 0;
+float heading = 0;
 
 void initGyro()
 {
@@ -102,7 +107,7 @@ void GyroscopeRead()
    hx = (((buff[2] << 8) | buff[3]) + g_offx) / 14.375;
    hy = (((buff[4] << 8) | buff[5]) + g_offy) / 14.375;
    hz = (((buff[6] << 8) | buff[7]) + g_offz) / 14.375;
-   turetemp = 35+ ((double) (((buff[0] << 8) | buff[1]) + 13200)) / 280; // temperature
+   temperature = 35+ ((double) (((buff[0] << 8) | buff[1]) + 13200)) / 280; // temperature
 }
 
 
@@ -178,6 +183,30 @@ void readFrom(int DEVICE, byte address , int num ,byte buff[])
    Wire.endTransmission();         // end transmission
 }
 
+void HMC5883Init()
+{
+   // no delay needed as we have already a delay(5) in HMC5843::init()
+   magnetometer.init(false); // Dont set mode yet, we'll do that later on.
+   // Calibrate HMC using self test, not recommended to change the gain after calibration.
+   magnetometer.calibrate(1, 32); // Use gain 1=default, valid 0-7, 7 not recommended.
+   // Single mode conversion was used in calibration, now set continuous mode
+   magnetometer.setMode(0);
+}
+
+void HMC5883Read()
+{
+  int ix,iy,iz;
+  float fx,fy,fz;
+  magnetometer.getValues(&ix,&iy,&iz);
+  magnetometer.getValues(&fx,&fy,&fz);
+
+  heading = atan2(fy, fx);
+  if(heading < 0) {
+    heading += 2 * M_PI;
+  }
+
+}
+
 void BMP085Init()
 {
    bmp085.init();
@@ -185,7 +214,9 @@ void BMP085Init()
 
 void BMP085Read()
 {
-   bmp085.getPressure(&Pressure);
+   bmp085.getPressure(&pressure);
+   bmp085.getAltitude(&altitude_bmp);
+   bmp085.getTemperature(&temp_bmp);
 }
 
 
@@ -213,30 +244,35 @@ void SDInit()
    for (int i = 0; i < 200; i++)
    {
       logfile = String("data") + String(i) + String(".log");
-      char filename[logfile.length() + 1];
-      logfile.toCharArray(filename, logfile.length() + 1);
-      if (!SD.exists(filename)) break;
+      char filename[50];
+      logfile.toCharArray(filename, 50);
+      if (!SD.exists(filename))
+      {
+         dataFile = SD.open(filename, FILE_WRITE);
+         dataFile.print("elapsed time, altitude, latitude, longitude, heading, speed, ");
+         dataFile.print("gforce_x, gforce_y, gforce_z, angle_x, angle_y, angle_z, ");
+         dataFile.print("gyros_x, gyros_y, gyros_z, temp, temp_bmp085, pressure, ");
+         dataFile.println("rpm, gear");
+         dataFile.close();
+         break;
+      }
    }
-   
-   dataFile = SD.open(filename, FILE_WRITE);
-   dataFile.print("elapsed time, altitude, latitude, longitude, speed, gforce_x, ");
-   dataFile.print("gforce_y, gforce_z, angle_x, angle_y, angle_z, gyros_x, gyros_y, ");
-   dataFile.println("gyros_z, temp, pressure, rpm, gear");
 }
 
 
 void SDWrite()
 {
-   char filename[logfile.length() + 1];
-   logfile.toCharArray(filename, logfile.length() + 1);
+   char filename[50];
+   logfile.toCharArray(filename, 50);
    dataFile = SD.open(filename, FILE_WRITE);
 
    unsigned long elapsed_millis = (millis() - start_millis);
    dataFile.print((elapsed_millis / 1000)); dataFile.print(".");
    dataFile.print((elapsed_millis % 1000)); dataFile.print(", ");
    dataFile.print(altitude); dataFile.print(", ");
-   dataFile.print(latitude); dataFile.print(", ");
-   dataFile.print(longitude); dataFile.print(", ");
+   dataFile.print(latitude, 6); dataFile.print(", ");
+   dataFile.print(longitude, 6); dataFile.print(", ");
+   dataFile.print(heading); dataFile.print(", ");
    dataFile.print(speed); dataFile.print(", ");
    dataFile.print(gforce_x); dataFile.print(", ");
    dataFile.print(gforce_y); dataFile.print(", ");
@@ -247,8 +283,9 @@ void SDWrite()
    dataFile.print(hx); dataFile.print(", ");
    dataFile.print(hy); dataFile.print(", ");
    dataFile.print(hz); dataFile.print(", ");
-   dataFile.print(turetemp); dataFile.print(", ");
-   dataFile.print(Pressure); dataFile.print(", ");
+   dataFile.print(temperature); dataFile.print(", ");
+   dataFile.print(temp_bmp); dataFile.print(", ");
+   dataFile.print(pressure); dataFile.print(", ");
    dataFile.print(KDSThread.getRPM()); dataFile.print(", ");
    dataFile.print(KDSThread.getGear());
    dataFile.println("");
@@ -267,6 +304,7 @@ void setup()
    AccelerometerInit();
    BMP085Init();
    initGyro();
+   HMC5883Init();
    start_millis = millis();
    kds_millis = start_millis;
 }
@@ -278,6 +316,7 @@ void loop()
    AccelerometerRead();
    GyroscopeRead();
    BMP085Read();
+   HMC5883Read();
    if (KDSThread.loop(kds_millis)) kds_millis = millis();
    
    if (!_DEBUG)
@@ -292,7 +331,7 @@ void loop()
       Serial.print(altitude, 6); Serial.print(", ");
       Serial.print(latitude, 6); Serial.print(", ");
       Serial.print(longitude, 6); Serial.print(", ");
-      Serial.print(speed); Serial.print(", ");
+      Serial.print(speed, 0); Serial.print(", ");
       Serial.print(gforce_x); Serial.print(", ");
       Serial.print(gforce_y); Serial.print(", ");
       Serial.print(gforce_z); Serial.print(", ");
@@ -302,8 +341,9 @@ void loop()
       Serial.print(hx); Serial.print(", ");
       Serial.print(hy); Serial.print(", ");
       Serial.print(hz); Serial.print(", ");
-      Serial.print(turetemp); Serial.print(", ");
-      Serial.print(Pressure); Serial.print(", ");
+      Serial.print(temperature); Serial.print(", ");
+      Serial.print(temp_bmp); Serial.print(", ");
+      Serial.print(pressure); Serial.print(", ");
       Serial.print(KDSThread.getRPM()); Serial.print(", ");
       Serial.print(KDSThread.getGear());
       Serial.println("");

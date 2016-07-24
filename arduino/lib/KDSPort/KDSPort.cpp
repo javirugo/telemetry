@@ -180,7 +180,7 @@ void KDSPort::setup()
    // Start Communication is a single byte "0x81" packet.
    req[0] = 0x81;
    rLen = this->sendRequest(req, resp, 1, 3);
-   delay(200);
+   //delay(200);
 
    // Response should be 3 bytes: 0xC1 0xEA 0x8F
    if ((rLen == 3) && (resp[0] == 0xC1) && (resp[1] == 0xEA) && (resp[2] == 0x8F))
@@ -190,7 +190,7 @@ void KDSPort::setup()
       req[0] = 0x10;
       req[1] = 0x80;
       rLen = this->sendRequest(req, resp, 2, 3);
-      delay(200);
+      //delay(200);
 
       // OK Response should be 2 bytes: 0x50 0x80
       if ((rLen == 2) && (resp[0] == 0x50) && (resp[1] == 0x80)) {
@@ -209,12 +209,6 @@ bool KDSPort::loop(unsigned long start_millis)
 {
    if ((unsigned long)(millis() - start_millis) < this->ISORequestDelay) return false;
 
-   uint8_t cmdSize;
-   uint8_t cmdBuf[6];
-   uint8_t respSize;
-   uint8_t respBuf[12];
-   uint8_t ect;
-
    if (!this->ECUconnected)
    {
       // Start KDS comms
@@ -224,6 +218,11 @@ bool KDSPort::loop(unsigned long start_millis)
    }
    else
    {
+      uint8_t cmdSize;
+      uint8_t cmdBuf[6];
+      uint8_t respSize;
+      uint8_t respBuf[12];
+
       cmdSize = 2; // each request is a 2 byte packet.
       cmdBuf[0] = 0x21; // Register request cmd
       if (this->gearCounter < 8)
