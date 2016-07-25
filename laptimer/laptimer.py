@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
-#from mock_metrics import Metrics
-from real_metrics import Metrics
+from mock_metrics import Metrics
+#from real_metrics import Metrics
 
 import json
 import time
 from datetime import datetime
 from shapely.geometry import Polygon, Point
 
-with open('../tracks/ALMERIA.json') as track_file:
+with open('../tracks/JEREZ.json') as track_file:
     track_data = json.load(track_file)
 
 START_POLY = Polygon([
@@ -32,8 +32,9 @@ SECTOR3_POLY = Polygon([
     (track_data["SECTOR3"]["lat1"], track_data["SECTOR3"]["lon1"])
 ])
 
-metricsSource = Metrics("data_almeria_16jun.db")
-#metricsSource.setMockData(track_data["MOCK"])
+#metricsSource = Metrics("data_almeria_16jun.db")
+metricsSource = Metrics()
+metricsSource.setMockData(track_data["MOCK"])
 
 current_sector = 0
 current_lap = 0
