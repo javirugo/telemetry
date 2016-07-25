@@ -11,9 +11,9 @@ useMock = False
 
 if useMock:
    from threads import DataRecordThread
-   from mocks import KDSThread, GPSThread, I2CThread
+   from mocks import MultiWiiThread, GPSThread
 else:
-   from threads import KDSThread, GPSThread, I2CThread, DataRecordThread
+   from threads import MultiWiiThread, GPSThread, DataRecordThread
 
 settings = {
   "start_raspi": "/picam/start.sh",
