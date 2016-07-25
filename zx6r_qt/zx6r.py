@@ -112,6 +112,8 @@ class MainWindow(QtGui.QMainWindow):
          self.ui.labelStatus_gyros.setText("degrees")
          self.ui.labelStatus_accelerometer.setText("0 to 2 g")
          self.ui.labelStatus_heading.setText("heading")
+         self.ui.labelStatus_temperature.setText("degrees C")
+         self.ui.labelStatus_pressure.setText("bar")
 
 
    # Called from the DataRecordThread when a lap is finished
@@ -165,6 +167,8 @@ class MainWindow(QtGui.QMainWindow):
          self.ui.labelStatus_gyros.setText(str(self.accel_angle_x))
          self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2) - self.gforce_correction))
          self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
+         self.ui.labelStatus_temperature.setText(str(round(self.gyros_temperature, 0)))
+         self.ui.labelStatus_pressure.setText(str(round(self.pressure, 2)))
 
 
    # Called from the GPSThread when new data is received from GPS

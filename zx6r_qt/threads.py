@@ -4,7 +4,6 @@ import smbus
 import math
 import time
 import sqlite3
-import pigpio
 
 from datetime import datetime
 from gps import *
@@ -26,7 +25,7 @@ class DataRecordThread(QtCore.QThread):
       self.fastest_lap_time = 0
       self.last_lap_time = 0
       self.lap_start_time = 0
-      
+
       self.db = sqlite3.connect('data.db')
       cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
       all_laps = cur.fetchall()
@@ -81,14 +80,13 @@ class DataRecordThread(QtCore.QThread):
 
          checkpoint = self.laptimer.check(self.mainWin.latitude, self.mainWin.longitude)
          if checkpoint:
-         
             # Set ending time of last sector
             if self.last_lap_id:
                cur.execute("UPDATE sector SET end=%.3f WHERE id_lap=%s and start=%s" %(
                   point_datetime,
                   self.last_lap_id,
                   self.last_sector_start))
-         
+
             if checkpoint == self.laptimer.CHECKPOINT_START:
                if self.last_lap_id:
                   cur.execute("UPDATE lap SET end=%.3f WHERE id=%s" %(
