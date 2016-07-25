@@ -35,7 +35,7 @@ class Laptimer():
              (track_data["SECTOR3"]["lat3"], track_data["SECTOR3"]["lon3"]),
              (track_data["SECTOR3"]["lat4"], track_data["SECTOR3"]["lon4"])
          ])
-      
+
          track_file.close()
 
 

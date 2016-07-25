@@ -58,16 +58,24 @@ class DataRecordThread(QtCore.QThread):
       while True:
          point_datetime_obj = datetime.utcnow()
          point_datetime = (point_datetime_obj - datetime(1970, 1, 1)).total_seconds()
+         elapsed_time = (point_datetime - self.mainWin.start_datetime).total_seconds()
 
-         insert_query = ("INSERT INTO data(id_round, datetime, latitude, longitude, speed, "
-            "rpm, gear, lean_x, lean_y, lean_z, gforce_x, gforce_y, gforce_z, compass) "
-            "VALUES(%s, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
-               current_round_id, point_datetime,
-               self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
+         insert_query = ("INSERT INTO data("
+            "id_round, datetime, elapsed_time, "
+            "altitude, latitude, longitude, speed, bt_latitude, bt_longitude, bt_speed,"
+            "rpm, gear, "
+            "accel_angle_x, accel_angle_y, accel_angle_z, accel_gforce_x, accel_gforce_y, accel_gforce_z, "
+            "gyros_x, gyros_y, gyros_z, gyros_temperature, "
+            "compass, baro_temperature, baro_pressure) "
+            "VALUES(%s, %.3f, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+               current_round_id, point_datetime, elapsed_time,
+               self.mainWin.altitude, self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
+               self.mainWin.bt_latitude, self.mainWin.bt_longitude, self.mainWin.bt_speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
-               self.mainWin.lean_x, self.mainWin.lean_y, self.mainWin.lean_z,
-               self.mainWin.gforce_x, self.mainWin.gforce_y, self.mainWin.gforce_z,
-               self.mainWin.compass))
+               self.mainWin.accel_angle_x, self.mainWin.accel_angle_y, self.mainWin.accel_angle_z,
+               self.mainWin.accel_gforce_x, self.mainWin.accel_gforce_y, self.mainWin.accel_gforce_z,
+               self.mainWin.gyros_x, self.mainWin.gyros_y, self.mainWin.gyros_z, self.mainWin.gyros_temperature,
+               self.mainWin.compass, self.mainWin.baro_temperature, self.mainWin.baro_pressure))
 
          cur.execute(insert_query)
 
@@ -130,92 +138,63 @@ class DataRecordThread(QtCore.QThread):
 
 
 
+class MultiWiiThread(QtCore.QThread):
+    def __init__(self, MultiWiiSerial = '/dev/ttyMultiWii'):
+        QtCore.QThread.__init__(self)
+        self.stopped = 1
+        self.MultiWiiSerial = MultiWiiSerial
 
-class KDSThread(QtCore.QThread):
-   def __init__(self, KDSSerial = 18):
-      QtCore.QThread.__init__(self)
-      self.stopped = 1
-      self.KDSSerial = KDSSerial
+    def run(self):
+        self.stopped = 0
 
-   def run(self):
-      self.stopped = 0
-      self.serialKDS = pigpio.pi()
-      self.serialKDS.set_mode(self.KDSSerial, pigpio.INPUT)
-      try: self.serialKDS.bb_serial_read_open(self.KDSSerial, 19200, 8)
-      except: pass
-      self.rpm = 0
-      self.gear = 0
+        self.serialMultiWii = serial.Serial(
+            port = self.MultiWiiSerial,
+            baudrate = 115200,
+            parity = serial.PARITY_NONE,
+            stopbits = serial.STOPBITS_ONE,
+            bytesize = serial.EIGHTBITS,
+            timeout = None)
 
-      while True:
-         if self.stopped:
-            self.serialKDS.bb_serial_read_close(self.KDSSerial)
-            self.serialKDS.stop()
-            break
+        while True:
+            if self.stopped:
+                self.serialMultiWii.close()
+                break
 
-         (count, str) = self.serialKDS.bb_serial_read(self.KDSSerial)
-         if count:
+        if self.serialMultiWii.inWaiting():
+            str = self.serialMultiWii.readline()
             parts = str.replace("\n", "").split(", ")
-            if len(parts) == 2:
-               try: self.rpm = int(parts[0])
-               except ValueError: pass
+            if len(parts) == 19:
+                data = {
+                    "altitude": parts[0],
+                    "latitude": parts[1],
+                    "longitude": parts[2],
+                    "heading": parts[3],
+                    "speed": parts[4],
+                    "gforce_x": parts[5],
+                    "gforce_y": parts[6],
+                    "gforce_z": parts[7],
+                    "xAngle": parts[8],
+                    "yAngle": parts[9],
+                    "zAngle": parts[10],
+                    "hx": parts[11],
+                    "hy": parts[12],
+                    "hz": parts[13],
+                    "temperature": parts[14],
+                    "temp_bmp": parts[15],
+                    "pressure": parts[16],
+                    "rpm": parts[17],
+                    "gear": parts[18]
+                }
+                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
-               try: self.gear = int(parts[1])
-               except ValueError: pass
+    def setPort(self, port):
+        self.MultiWiiSerial = port
 
-               data = {"rpm": self.rpm, "gear": self.gear}
-               self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+    def stop(self):
+        self.stopped = 1
 
-         time.sleep(0.06)
-
-   def setPort(self, port):
-      self.KDSSerial = port
-
-   def stop(self):
-      self.stopped = 1
-
-   def isRunning(self):
-      return self.stopped == 0
-
-
-'''
-      class KDSThread(QtCore.QThread):
-         def __init__(self, KDSSerial = '/dev/ttyKDS'):
-            QtCore.QThread.__init__(self)
-            self.stopped = 1
-            self.KDSSerial = KDSSerial
-
-         def run(self):
-            self.stopped = 0
-
-            self.serialKDS = serial.Serial(
-               port=self.KDSSerial,
-               baudrate=19200,
-               parity=serial.PARITY_NONE,
-               stopbits=serial.STOPBITS_ONE,
-               bytesize=serial.EIGHTBITS,
-               timeout=None)
-
-            while True:
-               if self.stopped:
-                  self.serialKDS.close()
-                  break
-
-               if self.serialKDS.inWaiting():
-                  str = self.serialKDS.readline()
-                  parts = str.replace("\n", "").split(", ")
-                  if len(parts) == 3:
-                     data = {"rpm": parts[0], "kph": parts[1], "gear": parts[2]}
-                     self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
-
-         def setPort(self, port):
-            self.KDSSerial = port
-
-         def stop(self):
-            self.stopped = 1
-
-         def isRunning(self):
-            return self.stopped == 0
-'''
+    def isRunning(self):
+        return self.stopped == 0
 
 
 class GPSThread(QtCore.QThread):
@@ -249,135 +228,3 @@ class GPSThread(QtCore.QThread):
 
    def isRunning(self):
       return self.stopped == 0
-
-
-class I2CThread(QtCore.QThread):
-   def __init__(self):
-      QtCore.QThread.__init__(self)
-      self.stopped = 1
-      self.bus = smbus.SMBus(1)
-      self.MUP6050_address = 0x68
-      self.HMC5883L_address = 0x1e
-      self.HMC5883L_scale = 0.92
-      self.gyro_scale = 131.0
-      self.accel_scale = 16384.0
-
-   def read_word(self, i2c_dev, adr):
-      high = self.bus.read_byte_data(i2c_dev, adr)
-      low = self.bus.read_byte_data(i2c_dev, adr+1)
-      val = (high << 8) + low
-      return val
-
-   def read_word_2c(self, i2c_dev, adr):
-      val = self.read_word(i2c_dev, adr)
-      if (val >= 0x8000):
-         return -((65535 - val) + 1)
-      else:
-         return val
-
-   def read_all(self):
-      raw_gyro_data = self.bus.read_i2c_block_data(self.MUP6050_address, 0x43, 6)
-      raw_accel_data = self.bus.read_i2c_block_data(self.MUP6050_address, 0x3b, 6)
-
-      gyro_scaled_x = self.twos_compliment((raw_gyro_data[0] << 8) + raw_gyro_data[1]) / self.gyro_scale
-      gyro_scaled_y = self.twos_compliment((raw_gyro_data[2] << 8) + raw_gyro_data[3]) / self.gyro_scale
-      gyro_scaled_z = self.twos_compliment((raw_gyro_data[4] << 8) + raw_gyro_data[5]) / self.gyro_scale
-
-      accel_scaled_x = self.twos_compliment((raw_accel_data[0] << 8) + raw_accel_data[1]) / self.accel_scale
-      accel_scaled_y = self.twos_compliment((raw_accel_data[2] << 8) + raw_accel_data[3]) / self.accel_scale
-      accel_scaled_z = self.twos_compliment((raw_accel_data[4] << 8) + raw_accel_data[5]) / self.accel_scale
-
-      return(gyro_scaled_x,gyro_scaled_y,gyro_scaled_z,accel_scaled_x,accel_scaled_y,accel_scaled_z)
-
-   def twos_compliment(self, val):
-      if (val >= 0x8000):
-         return -((65535 - val) + 1)
-      else:
-         return val
-
-   def get_y_rotation(self, x,y,z):
-      radians = math.atan2(x, self.dist(y,z))
-      return -math.degrees(radians)
-
-   def get_x_rotation(self, x,y,z):
-      radians = math.atan2(y, self.dist(x,z))
-      return math.degrees(radians)
-
-   def dist(self, a, b):
-      return math.sqrt((a * a) + (b * b))
-
-
-   def run(self):
-      self.bus.write_byte_data(self.MUP6050_address, 0x6b, 0) # wake up mpu6050
-      self.bus.write_byte_data(self.MUP6050_address, 0x1A, 0x06) # set DLPF to 6 (5Hz)
-
-      self.time_diff = 0.01
-      (gyro_scaled_x, gyro_scaled_y, gyro_scaled_z, accel_scaled_x, accel_scaled_y, accel_scaled_z) = self.read_all()
-
-      last_x = self.get_x_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
-      last_y = self.get_y_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
-
-      self.gyro_offset_x = gyro_scaled_x
-      self.gyro_offset_y = gyro_scaled_y
-
-      self.gyro_total_x = (last_x) - self.gyro_offset_x
-      self.gyro_total_y = (last_y) - self.gyro_offset_y
-
-      self.bus.write_byte_data(self.HMC5883L_address, 0, 0b01110000)
-      self.bus.write_byte_data(self.HMC5883L_address, 1, 0b00100000)
-      self.bus.write_byte_data(self.HMC5883L_address, 2, 0b00000000)
-      self.stopped = 0
-
-      lean = 0
-      gforce = 0
-
-      while True:
-         if self.stopped:
-            break
-
-         try:
-            compass_x_out = self.read_word_2c(self.HMC5883L_address, 3) * self.HMC5883L_scale
-            compass_y_out = self.read_word_2c(self.HMC5883L_address, 7) * self.HMC5883L_scale
-            compass_z_out = self.read_word_2c(self.HMC5883L_address, 5) * self.HMC5883L_scale
-
-            bearing  = math.atan2(compass_y_out, compass_x_out)
-            if (bearing < 0):
-                bearing += 2 * math.pi
-
-            time.sleep(self.time_diff - 0.005)
-            (gyro_scaled_x, gyro_scaled_y, gyro_scaled_z, accel_scaled_x, accel_scaled_y, accel_scaled_z) = self.read_all()
-
-            gyro_scaled_x -= self.gyro_offset_x
-            gyro_scaled_y -= self.gyro_offset_y
-
-            gyro_x_delta = (gyro_scaled_x * self.time_diff)
-            gyro_y_delta = (gyro_scaled_y * self.time_diff)
-
-            self.gyro_total_x += gyro_x_delta
-            self.gyro_total_y += gyro_y_delta
-
-            rotation_x = self.get_x_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
-            rotation_y = self.get_y_rotation(accel_scaled_x, accel_scaled_y, accel_scaled_z)
-
-            data = {
-               "lean_x": round(rotation_x, 2),
-               "lean_y": round(rotation_y, 2),
-               "lean_z": 0,
-               "gforce_x": round(accel_scaled_x, 2),
-               "gforce_y": round(accel_scaled_y, 2),
-               "gforce_z": 0,
-               "compass": math.degrees(bearing)
-            }
-
-            self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
-            #time.sleep(0.05)
-         except IOError:
-            time.sleep(0.01)
-            pass
-
-   def stop(self):
-      self.stopped = 1
-
-   def isRunning(self):
-      return self.stopped == 0
-

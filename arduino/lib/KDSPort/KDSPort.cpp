@@ -27,11 +27,11 @@ uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t 
   bool forMe = false;
   char radioBuf[32];
   uint32_t startTime;
-  
+
   for (uint8_t i = 0; i < 16; i++) {
     buf[i] = 0;
   }
-  
+
   // Zero the response buffer up to maxLen
   for (uint8_t i = 0; i < maxLen; i++) {
     response[i] = 0;
@@ -58,14 +58,14 @@ uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t 
     buf[4 + z] = this->calcChecksum(buf, 4 + z);
     bytesToSend = 5 + z;
   }
-  
+
   // Now send the command...
   for (uint8_t i = 0; i < bytesToSend; i++) {
     bytesSent += Serial2.write(buf[i]);
   }
-  
+
   startTime = millis();
-  
+
   // Wait for and deal with the reply
   while ((bytesRcvd <= maxLen) && ((millis() - startTime) < this->MAXSENDTIME)) {
     if (Serial2.available()) {
@@ -127,8 +127,6 @@ uint8_t KDSPort::sendRequest(const uint8_t *request, uint8_t *response, uint8_t 
           // Reset the counters
           rCnt = 0;
           bytesRcvd = 0;
-          
-          // ISO 14230 specifies a delay between ECU responses.
         } else {
           // must be data, so put it in the response buffer
           // rCnt must be >= 4 to be here.
@@ -160,7 +158,7 @@ void KDSPort::setup()
 {
    pinMode(this->_pinTX, OUTPUT);
    pinMode(this->_pinRX, INPUT);
-   
+
    uint8_t rLen;
    uint8_t req[2];
    uint8_t resp[3];
@@ -180,7 +178,7 @@ void KDSPort::setup()
    // Start Communication is a single byte "0x81" packet.
    req[0] = 0x81;
    rLen = this->sendRequest(req, resp, 1, 3);
-   //delay(200);
+   delay(200);
 
    // Response should be 3 bytes: 0xC1 0xEA 0x8F
    if ((rLen == 3) && (resp[0] == 0xC1) && (resp[1] == 0xEA) && (resp[2] == 0x8F))
@@ -190,7 +188,7 @@ void KDSPort::setup()
       req[0] = 0x10;
       req[1] = 0x80;
       rLen = this->sendRequest(req, resp, 2, 3);
-      //delay(200);
+      delay(200);
 
       // OK Response should be 2 bytes: 0x50 0x80
       if ((rLen == 2) && (resp[0] == 0x50) && (resp[1] == 0x80)) {
@@ -198,7 +196,7 @@ void KDSPort::setup()
          return;
       }
    }
-   
+
    // Otherwise, we failed to init.
    this->ECUconnected = false;
    return;
@@ -288,4 +286,3 @@ bool KDSPort::loop(unsigned long start_millis)
       return true;
    }
 }
-

@@ -18,7 +18,7 @@ else:
 settings = {
   "start_raspi": "/picam/start.sh",
   "picam_home": "/picam",
-  "KDSSerialPort": "/dev/ttyKDS"
+  "KDSSerialPort": "/dev/ttyMultiWii"
 }
 
 
@@ -38,15 +38,10 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
-      os.system("sudo killall pigpiod && sudo pigpiod &")
-
-      self.KDSThread = KDSThread()
-      self.connect( self.KDSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateKDS )
+      self.MultiWiiThread = MultiWiiThread()
+      self.connect( self.MultiWiiThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateMultiWii )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
-      self.I2CThread = I2CThread()
-      self.connect( self.I2CThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateI2C )
-      
       self.DataRecordThread = DataRecordThread(self)
       self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
 
@@ -58,21 +53,34 @@ class MainWindow(QtGui.QMainWindow):
 
       self.start_datetime = False
       self.current_round_id = 0
+
+      self.elapsed_time = False
+      self.bt_altitude = 0
+      self.bt_latitude = 0
+      self.bt_longitude = 0
+      self.bt_speed = 0
+      self.altitude = 0
       self.latitude = 0
       self.longitude = 0
       self.speed = 0
       self.rpm = 0
       self.gear = 0
-      self.lean_x = 0
-      self.lean_y = 0
-      self.lean_z = 0
-      self.gforce_x = 0
-      self.gforce_y = 0
-      self.gforce_z = 0
+      self.gyros_x = 0
+      self.gyros_y = 0
+      self.gyros_z = 0
+      self.gyros_temperature = 0
+      self.accel_gforce_x = 0
+      self.accel_gforce_y = 0
+      self.accel_gforce_z = 0
+      self.accel_angle_x = 0
+      self.accel_angle_y = 0
+      self.accel_angle_z = 0
       self.compass = 0
+      self.baro_temperature = 0
+      self.baro_pressure = 0
 
-      self.lean_correction = -3
-      self.gforce_correction = 0.24
+      self.gyros_correction = 0
+      self.accel_correction = 0
 
    # If anything goes wrong, click the "reboot" button! 
    # https://www.youtube.com/watch?v=PtXtIivRRKQ
@@ -89,13 +97,11 @@ class MainWindow(QtGui.QMainWindow):
    # depending on the status of "recording" and liveStatus-pushbutton
    def pollerControl(self, checkbox_status = False):
       if self.ui.pbLiveStatus.isChecked() or self.recording:
-         if not self.KDSThread.isRunning(): self.KDSThread.start()
-         if not self.I2CThread.isRunning(): self.I2CThread.start()
+         if not self.MultiWiiThread.isRunning(): self.MultiWiiThread.start()
          if not self.GPSThread.isRunning(): self.GPSThread.start()
       else:
-         self.KDSThread.stop()
+         self.MultiWiiThread.stop()
          self.GPSThread.stop()
-         self.I2CThread.stop()
          self.ui.progressBarRPM.setValue(0)
          self.ui.dialLean.setValue(180)
          self.ui.lcdRPM.display(0)
@@ -130,96 +136,65 @@ class MainWindow(QtGui.QMainWindow):
 
 
    # Called from the KDSThread when new data is received from KDS
-   def updateKDS(self, data):
-      if data["rpm"] != 0 or data["gear"] != 0:
-         self.rpm = data["rpm"]
-         self.gear = data["gear"]
-      else:
-         self.rpm = 0
-         self.gear = 0
+   def updateMultiWii(self, data):
+      self.altitude = data["altitude"]
+      self.latitude = data["latitude"]
+      self.longitude = data["longitude"]
+      self.compass = data["heading"]
+      self.speed = data["speed"]
+      self.accel_gforce_x = data["gforce_x"]
+      self.accel_gforce_y = data["gforce_y"]
+      self.accel_gforce_z = data["gforce_z"]
+      self.accel_angle_x = data["xAngle"]
+      self.accel_angle_y = data["yAngle"]
+      self.accel_angle_z = data["zAngle"]
+      self.gyros_x = data["hx"]
+      self.gyros_y = data["hy"]
+      self.gyros_z = data["hz"]
+      self.gyros_temperature = data["temperature"]
+      self.baro_temperature = data["temp_bmp"]
+      self.baro_pressure = data["pressure"]
+      self.rpm = data["rpm"]
+      self.gear = data["gear"]
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.lcdRPM.display(self.rpm)
          self.ui.lcdGear.display(self.gear)
          self.ui.progressBarRPM.setValue(self.rpm)
+         self.ui.dialLean.setValue(self.accel_angle_x + 180)
+         self.ui.labelStatus_gyros.setText(str(self.accel_angle_x))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2) - self.gforce_correction))
+         self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
 
 
    # Called from the GPSThread when new data is received from GPS
    def updateGPS(self, data):
-      self.latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
-      self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
-      self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
+      self.bt_latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
+      self.bt_longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
+      self.bt_speed = 0 if math.isnan(data["speed"]) else data["speed"]
 
       if self.ui.pbLiveStatus.isChecked():
-         self.ui.labelStatus_lat.setText(str(self.latitude))
-         self.ui.labelStatus_lon.setText(str(self.longitude))
-         self.ui.labelStatus_speed.setText("%s kph" % str(self.speed))
-
-
-   # Called from the I2CThread when new data is available on I2C
-   def updateI2C(self, data):
-      self.lean_x = round((data["lean_x"] + self.lean_correction) * -1)
-      #self.lean_x = data["lean_x"]
-      self.lean_y = data["lean_y"]
-      self.lean_z = data["lean_z"]
-      self.gforce_x = data["gforce_x"]
-      self.gforce_y = data["gforce_y"]
-      self.gforce_z = data["gforce_z"]
-      self.compass = data["compass"]
-
-      if self.ui.pbLiveStatus.isChecked():
-         self.ui.dialLean.setValue(self.lean_x + 180)
-         self.ui.labelStatus_gyros.setText(str(self.lean_x))
-         self.ui.labelStatus_accelerometer.setText(str(round(self.gforce_y, 2) - self.gforce_correction))
-         self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
-
-
-   # This is called with a small delay from the record-switch method to allow picam
-   # to start the daemon and get ready
-   def startRecording(self):
-         #self.start_datetime = (datetime.utcnow() - datetime(1970, 1, 1)).total_seconds()
-         self.start_datetime = datetime.utcnow()
-
-         os.system("echo 'dir=/datos\nfilename=%s.ts' > /picam/hooks/start_record" % \
-            int((self.start_datetime - datetime(1970, 1, 1)).total_seconds()))
-
-         self.DataRecordThread.start()
-         self.ui.pbRecord.setStyleSheet("background-color: #AC1E2C;")
-         self.ui.pbRecord.setText("STOP Recording")
-
-
-   # This is called with a small delay from the record-switch method to allow picam
-   # to stop recording before killing the daemon
-   def stopRecording(self):
-         os.system("killall picam")
-
-         self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
-         self.ui.pbRecord.setText("Record")
-         self.recording = False
-         self.pollerControl()
+         self.ui.labelStatus_lat.setText(str(self.bt_latitude))
+         self.ui.labelStatus_lon.setText(str(self.bt_longitude))
+         self.ui.labelStatus_speed.setText("%s kph" % str(self.bt_speed))
 
 
    # Issued when the record button is pressed
    def switchRecording(self):
-      self.timeoutTimer = QtCore.QTimer(self)
-      self.timeoutTimer.setSingleShot(True)
-
       if not self.recording:
+         self.start_datetime = datetime.utcnow()
          self.ui.pbRecord.setStyleSheet("background-color: #662222;")
-         self.recording = True
          self.pollerControl()
-
-         self.process.close()
-         self.process.start(self.settings["start_raspi"])
-         self.timeoutTimer.timeout.connect(self.startRecording)
-
+         self.DataRecordThread.start()
+         self.ui.pbRecord.setStyleSheet("background-color: #AC1E2C;")
+         self.ui.pbRecord.setText("STOP Recording")
+         self.recording = True
       else:
-         self.ui.pbRecord.setStyleSheet("background-color: #662222;")
-         os.system("touch %s/hooks/stop_record" % self.settings["picam_home"])
          self.DataRecordThread.stop()
-         self.timeoutTimer.timeout.connect(self.stopRecording)
-
-      self.timeoutTimer.start(3000)
+         self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
+         self.ui.pbRecord.setText("Record")
+         self.pollerControl()
+         self.recording = False
 
 
 

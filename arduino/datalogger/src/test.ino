@@ -331,6 +331,7 @@ void loop()
       Serial.print(altitude, 6); Serial.print(", ");
       Serial.print(latitude, 6); Serial.print(", ");
       Serial.print(longitude, 6); Serial.print(", ");
+      Serial.print(heading); Serial.print(", ");
       Serial.print(speed, 0); Serial.print(", ");
       Serial.print(gforce_x); Serial.print(", ");
       Serial.print(gforce_y); Serial.print(", ");
@@ -348,5 +349,7 @@ void loop()
       Serial.print(KDSThread.getGear());
       Serial.println("");
    }
+
+   delay(10);
 }
 
