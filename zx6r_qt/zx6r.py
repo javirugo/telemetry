@@ -32,6 +32,11 @@ class MainWindow(QtGui.QMainWindow):
       self.ui = mainwindow.Ui_MainWindow()
       self.ui.setupUi(self)
 
+      self.tableLaps.setColumnCount(2)
+      self.tableLaps.setRowCount(1)
+      self.tableLaps.setItem(0, 0, QtGui.QTableWidgetItem("Lap"))
+      self.tableLaps.setItem(0, 1, QtGui.QTableWidgetItem("Time"))
+
       self.ui.pbRecord.clicked.connect(self.switchRecording)
       self.ui.pbReboot.clicked.connect(self.reboot)
       self.ui.pbShutdown.clicked.connect(self.shutdown)

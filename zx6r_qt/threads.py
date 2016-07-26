@@ -1,4 +1,3 @@
-
 import serial
 import smbus
 import math
@@ -117,7 +116,6 @@ class DataRecordThread(QtCore.QThread):
 
             self.last_sector_start = "%.3f" % point_datetime
 
-
          if self.stopped:
             cur.execute("UPDATE round SET end=%s" % point_datetime)
             self.db.commit()
@@ -158,32 +156,32 @@ class MultiWiiThread(QtCore.QThread):
                 self.serialMultiWii.close()
                 break
 
-        if self.serialMultiWii.inWaiting():
-            str = self.serialMultiWii.readline()
-            parts = str.replace("\n", "").split(", ")
-            if len(parts) == 19:
-                data = {
-                    "altitude": parts[0],
-                    "latitude": parts[1],
-                    "longitude": parts[2],
-                    "heading": parts[3],
-                    "speed": parts[4],
-                    "gforce_x": parts[5],
-                    "gforce_y": parts[6],
-                    "gforce_z": parts[7],
-                    "xAngle": parts[8],
-                    "yAngle": parts[9],
-                    "zAngle": parts[10],
-                    "hx": parts[11],
-                    "hy": parts[12],
-                    "hz": parts[13],
-                    "temperature": parts[14],
-                    "temp_bmp": parts[15],
-                    "pressure": parts[16],
-                    "rpm": parts[17],
-                    "gear": parts[18]
-                }
-                self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+        str = self.serialMultiWii.readline()
+        parts = str.replace("\n", "").split(", ")
+        if len(parts) == 19:
+            data = {
+                "altitude": parts[0],
+                "latitude": parts[1],
+                "longitude": parts[2],
+                "heading": parts[3],
+                "speed": parts[4],
+                "gforce_x": parts[5],
+                "gforce_y": parts[6],
+                "gforce_z": parts[7],
+                "xAngle": parts[8],
+                "yAngle": parts[9],
+                "zAngle": parts[10],
+                "hx": parts[11],
+                "hy": parts[12],
+                "hz": parts[13],
+                "temperature": parts[14],
+                "temp_bmp": parts[15],
+                "pressure": parts[16],
+                "rpm": parts[17],
+                "gear": parts[18]
+            }
+            
+            self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
     def setPort(self, port):
         self.MultiWiiSerial = port
