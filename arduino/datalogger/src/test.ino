@@ -204,7 +204,8 @@ void HMC5883Read()
   if(heading < 0) {
     heading += 2 * M_PI;
   }
-
+  
+  heading = heading * 180/M_PI;
 }
 
 void BMP085Init()

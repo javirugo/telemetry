@@ -32,10 +32,10 @@ class MainWindow(QtGui.QMainWindow):
       self.ui = mainwindow.Ui_MainWindow()
       self.ui.setupUi(self)
 
-      self.tableLaps.setColumnCount(2)
-      self.tableLaps.setRowCount(1)
-      self.tableLaps.setItem(0, 0, QtGui.QTableWidgetItem("Lap"))
-      self.tableLaps.setItem(0, 1, QtGui.QTableWidgetItem("Time"))
+      self.ui.tableLaps.setColumnCount(2)
+      self.ui.tableLaps.setRowCount(1)
+      self.ui.tableLaps.setItem(0, 0, QtGui.QTableWidgetItem("Lap"))
+      self.ui.tableLaps.setItem(0, 1, QtGui.QTableWidgetItem("Time"))
 
       self.ui.pbRecord.clicked.connect(self.switchRecording)
       self.ui.pbReboot.clicked.connect(self.reboot)
@@ -118,7 +118,7 @@ class MainWindow(QtGui.QMainWindow):
          self.ui.labelStatus_accelerometer.setText("0 to 2 g")
          self.ui.labelStatus_heading.setText("heading")
          self.ui.labelStatus_temperature.setText("degrees C")
-         self.ui.labelStatus_pressure.setText("bar")
+         self.ui.labelStatus_pressure.setText("Pa")
 
 
    # Called from the DataRecordThread when a lap is finished
@@ -144,36 +144,36 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the KDSThread when new data is received from KDS
    def updateMultiWii(self, data):
-      self.altitude = data["altitude"]
-      self.latitude = data["latitude"]
-      self.longitude = data["longitude"]
-      self.compass = data["heading"]
-      self.speed = data["speed"]
-      self.accel_gforce_x = data["gforce_x"]
-      self.accel_gforce_y = data["gforce_y"]
-      self.accel_gforce_z = data["gforce_z"]
-      self.accel_angle_x = data["xAngle"]
-      self.accel_angle_y = data["yAngle"]
-      self.accel_angle_z = data["zAngle"]
-      self.gyros_x = data["hx"]
-      self.gyros_y = data["hy"]
-      self.gyros_z = data["hz"]
-      self.gyros_temperature = data["temperature"]
-      self.baro_temperature = data["temp_bmp"]
-      self.baro_pressure = data["pressure"]
-      self.rpm = data["rpm"]
-      self.gear = data["gear"]
+      self.altitude = float(data["altitude"])
+      self.latitude = float(data["latitude"])
+      self.longitude = float(data["longitude"])
+      self.compass = float(data["heading"])
+      self.speed = int(data["speed"])
+      self.accel_gforce_x = float(data["gforce_x"])
+      self.accel_gforce_y = float(data["gforce_y"])
+      self.accel_gforce_z = float(data["gforce_z"])
+      self.accel_angle_x = float(data["xAngle"])
+      self.accel_angle_y = float(data["yAngle"])
+      self.accel_angle_z = float(data["zAngle"])
+      self.gyros_x = float(data["hx"])
+      self.gyros_y = float(data["hy"])
+      self.gyros_z = float(data["hz"])
+      self.gyros_temperature = int(data["temperature"])
+      self.baro_temperature = int(data["temp_bmp"])
+      self.baro_pressure = int(data["pressure"])
+      self.rpm = int(data["rpm"])
+      self.gear = int(data["gear"])
 
       if self.ui.pbLiveStatus.isChecked():
          self.ui.lcdRPM.display(self.rpm)
          self.ui.lcdGear.display(self.gear)
          self.ui.progressBarRPM.setValue(self.rpm)
-         self.ui.dialLean.setValue(self.accel_angle_x + 180)
+         self.ui.dialLean.setValue((self.accel_angle_x * -1) + 180)
          self.ui.labelStatus_gyros.setText(str(self.accel_angle_x))
-         self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2) - self.gforce_correction))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2) - self.accel_correction))
          self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
          self.ui.labelStatus_temperature.setText(str(round(self.gyros_temperature, 0)))
-         self.ui.labelStatus_pressure.setText(str(round(self.pressure, 2)))
+         self.ui.labelStatus_pressure.setText(str(self.baro_pressure))
 
 
    # Called from the GPSThread when new data is received from GPS
