@@ -33,9 +33,10 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.setupUi(self)
 
       self.ui.tableLaps.setColumnCount(2)
-      self.ui.tableLaps.setRowCount(1)
-      self.ui.tableLaps.setItem(0, 0, QtGui.QTableWidgetItem("Lap"))
-      self.ui.tableLaps.setItem(0, 1, QtGui.QTableWidgetItem("Time"))
+      self.ui.tableLaps.setRowCount(0)
+      self.ui.tableLaps.setSortingEnabled(False)
+      self.ui.tableLaps.horizontalHeader().setStretchLastSection(True)
+
 
       self.ui.pbRecord.clicked.connect(self.switchRecording)
       self.ui.pbReboot.clicked.connect(self.reboot)
@@ -43,18 +44,16 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
       self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
 
+      self.ui.labelLastLapTime.setText("00:00.000")
+      self.ui.labelBestLapTime.setText("00:00.000")
+
       self.MultiWiiThread = MultiWiiThread()
       self.connect( self.MultiWiiThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateMultiWii )
       self.GPSThread = GPSThread()
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
       self.DataRecordThread = DataRecordThread(self)
       self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
-
-      self.ui.labelLastLapTime.setText("00:00.000")
-      self.ui.labelBestLapTime.setText("00:00.000")
-      self.updateLaptimes({
-         "last": self.DataRecordThread.last_lap_time,
-         "best": self.DataRecordThread.fastest_lap_time})
+      self.DataRecordThread.loadHistory()
 
       self.start_datetime = False
       self.current_round_id = 0
@@ -107,6 +106,8 @@ class MainWindow(QtGui.QMainWindow):
       else:
          self.MultiWiiThread.stop()
          self.GPSThread.stop()
+
+      if not self.ui.pbLiveStatus.isChecked():
          self.ui.progressBarRPM.setValue(0)
          self.ui.dialLean.setValue(180)
          self.ui.lcdRPM.display(0)
@@ -122,15 +123,40 @@ class MainWindow(QtGui.QMainWindow):
 
 
    # Called from the DataRecordThread when a lap is finished
-   def updateLaptimes(self, data):
+   def updateLaptimes(self, data, addLapToTable = True):
       if isinstance(data["last"], timedelta):
-         self.ui.labelLastLapTime.setText(
-            "%.2d:%.2d.%s" % (
+         timestr = "%.2d:%.2d.%s" % (
                (data["last"].seconds//60)%60,
                data["last"].seconds%60,
-               str(data["last"].microseconds)[:3]))
+               str(data["last"].microseconds)[:3])
 
-         #self.ui.labelLastLapTime.setText(str(data["last"]))
+         self.ui.labelLastLapTime.setText(timestr)
+
+         if addLapToTable:
+            newrow = self.ui.tableLaps.rowCount() + 1
+            self.ui.tableLaps.setRowCount(newrow)
+            lapItem = QtGui.QTableWidgetItem("Lap %i  " % newrow)
+            timeItem = QtGui.QTableWidgetItem(" %s" % timestr)
+            lapItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
+            timeItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+            if data["last"] <= data["best"]:
+               rowIdx = 0
+               while rowIdx < self.ui.tableLaps.rowCount():
+                  prevLap = self.ui.tableLaps.item(rowIdx, 0)
+                  prevTime = self.ui.tableLaps.item(rowIdx, 1)
+                  if prevLap: prevLap.setBackgroundColor(QtGui.QColor(0, 0, 0))
+                  if prevTime: prevTime.setBackgroundColor(QtGui.QColor(0, 0, 0))
+                  rowIdx += 1
+
+               lapItem.setBackgroundColor(QtGui.QColor(17, 62, 29))
+               timeItem.setBackgroundColor(QtGui.QColor(17, 62, 29))
+            else:
+               lapItem.setBackgroundColor(QtGui.QColor(0, 0, 0))
+               timeItem.setBackgroundColor(QtGui.QColor(0, 0, 0))
+
+            self.ui.tableLaps.setItem(newrow -1, 0, lapItem)
+            self.ui.tableLaps.setItem(newrow -1, 1, timeItem)
+
 
       if isinstance(data["best"], timedelta):
          self.ui.labelBestLapTime.setText(
@@ -138,8 +164,6 @@ class MainWindow(QtGui.QMainWindow):
                (data["best"].seconds//60)%60,
                data["best"].seconds%60,
                str(data["best"].microseconds)[:3]))
-
-         #self.ui.labelBestLapTime.setText(str(data["best"]))
 
 
    # Called from the KDSThread when new data is received from KDS
@@ -191,30 +215,27 @@ class MainWindow(QtGui.QMainWindow):
    # Issued when the record button is pressed
    def switchRecording(self):
       if not self.recording:
+         self.recording = True
          self.start_datetime = datetime.utcnow()
          self.ui.pbRecord.setStyleSheet("background-color: #662222;")
          self.pollerControl()
          self.DataRecordThread.start()
          self.ui.pbRecord.setStyleSheet("background-color: #AC1E2C;")
          self.ui.pbRecord.setText("STOP Recording")
-         self.recording = True
       else:
+         self.recording = False
          self.DataRecordThread.stop()
          self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
          self.ui.pbRecord.setText("Record")
          self.pollerControl()
-         self.recording = False
 
 
 
 app = QtGui.QApplication(sys.argv)
 my_mainWindow = MainWindow(settings)
 
-if useMock:
-   my_mainWindow.show()
-else:
-   QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
-   my_mainWindow.showFullScreen()
+QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+my_mainWindow.showFullScreen()
 
 sys.exit(app.exec_())
 

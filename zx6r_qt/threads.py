@@ -17,7 +17,7 @@ class DataRecordThread(QtCore.QThread):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.mainWin = mainwin
-      self.laptimer = Laptimer("%s/../tracks/ALMERIA.json" % os.path.dirname(os.path.abspath(__file__)))
+      self.laptimer = Laptimer("%s/../tracks/JEREZ.json" % os.path.dirname(os.path.abspath(__file__)))
       self.last_lap_id = 0
       self.last_sector_idlap = 0
       self.last_sector_start = 0
@@ -25,18 +25,6 @@ class DataRecordThread(QtCore.QThread):
       self.fastest_lap_time = 0
       self.last_lap_time = 0
       self.lap_start_time = 0
-
-      self.db = sqlite3.connect('%s/data.db' % os.path.dirname(os.path.abspath(__file__)))
-      cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
-      all_laps = cur.fetchall()
-      self.last_lap_time, self.fastest_lap_time = self.laptimer.loadHistory(all_laps)
-
-      self.emit(QtCore.SIGNAL('update(PyQt_PyObject)'), {
-         "last": self.last_lap_time,
-         "best": self.fastest_lap_time})
-
-      self.db.close()
-
 
    def run(self):
       self.stopped = 0
@@ -78,8 +66,11 @@ class DataRecordThread(QtCore.QThread):
 
          cur.execute(insert_query)
 
-         checkpoint = self.laptimer.check(self.mainWin.latitude, self.mainWin.longitude)
+         checkpoint = self.laptimer.check(self.mainWin.bt_latitude, self.mainWin.bt_longitude)
          if checkpoint:
+
+            if (point_datetime - float(self.last_sector_start)) < 10: continue
+            
             # Set ending time of last sector
             if self.last_lap_id:
                cur.execute("UPDATE sector SET end=%.3f WHERE id_lap=%s and start=%s" %(
@@ -126,6 +117,23 @@ class DataRecordThread(QtCore.QThread):
          self.db.commit()
          time.sleep(0.04)
 
+   def loadHistory(self):
+      self.db = sqlite3.connect('%s/data.db' % os.path.dirname(os.path.abspath(__file__)))
+      cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
+
+      all_laps = cur.fetchall()
+      for lap in all_laps:
+         if lap[0] and lap[1]:
+            self.last_lap_time = datetime.fromtimestamp(lap[1]) - datetime.fromtimestamp(lap[0])
+            if self.fastest_lap_time == 0 or self.last_lap_time < self.fastest_lap_time:
+               self.fastest_lap_time = self.last_lap_time
+
+            self.emit(QtCore.SIGNAL('update(PyQt_PyObject)'), {
+               "last": self.last_lap_time,
+               "best": self.fastest_lap_time})
+
+      self.db.close()
+   
 
    def stop(self):
       self.stopped = 1
@@ -144,7 +152,7 @@ class MultiWiiThread(QtCore.QThread):
     def run(self):
         self.stopped = 0
 
-	try:
+        try:
             self.serialMultiWii = serial.Serial(
                 port = self.MultiWiiSerial,
                 baudrate = 115200,
@@ -184,8 +192,7 @@ class MultiWiiThread(QtCore.QThread):
                    }
             
                    self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
-
-	except:
+        except:
             pass
 
     def setPort(self, port):

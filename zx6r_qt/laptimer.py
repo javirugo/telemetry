@@ -69,15 +69,3 @@ class Laptimer():
 
       return False
 
-
-   def loadHistory(self, all_laps):
-      last_lap = 0
-      best_lap = 0
-      for lap in all_laps:
-         if lap[0] and lap[1]:
-            last_lap = datetime.fromtimestamp(lap[1]) - datetime.fromtimestamp(lap[0])
-            if best_lap == 0 or last_lap < best_lap:
-               best_lap = last_lap
-
-      return [last_lap, best_lap]
-

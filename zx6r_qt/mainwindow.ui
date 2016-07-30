@@ -52,7 +52,8 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
 #progressBarRPM { background-color: black; }
 #progressBarRPM::chunk { background: #C6D0CE; }
 
-#tableLaps { width: 100%; height: 100%; }</string>
+#tableLaps { color: white; font-size: 18px; }
+</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -68,7 +69,7 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -506,12 +507,42 @@ QTabWidget::pane { border: 2px solid red; border-radius: 7px; background-color: 
        <widget class="QTableWidget" name="tableLaps">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>1</x>
           <y>0</y>
-          <width>295</width>
-          <height>185</height>
+          <width>297</width>
+          <height>188</height>
          </rect>
         </property>
+        <property name="dragEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::InternalMove</enum>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::NoSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="textElideMode">
+         <enum>Qt::ElideMiddle</enum>
+        </property>
+        <property name="horizontalScrollMode">
+         <enum>QAbstractItemView::ScrollPerPixel</enum>
+        </property>
+        <property name="gridStyle">
+         <enum>Qt::DotLine</enum>
+        </property>
+        <property name="cornerButtonEnabled">
+         <bool>false</bool>
+        </property>
+        <attribute name="horizontalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
        </widget>
       </widget>
      </widget>
