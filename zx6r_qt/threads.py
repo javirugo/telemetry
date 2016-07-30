@@ -1,3 +1,4 @@
+import os
 import serial
 import smbus
 import math
@@ -16,7 +17,7 @@ class DataRecordThread(QtCore.QThread):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.mainWin = mainwin
-      self.laptimer = Laptimer("../tracks/ALMERIA.json")
+      self.laptimer = Laptimer("%s/../tracks/ALMERIA.json" % os.path.dirname(os.path.abspath(__file__)))
       self.last_lap_id = 0
       self.last_sector_idlap = 0
       self.last_sector_start = 0
@@ -25,7 +26,7 @@ class DataRecordThread(QtCore.QThread):
       self.last_lap_time = 0
       self.lap_start_time = 0
 
-      self.db = sqlite3.connect('data.db')
+      self.db = sqlite3.connect('%s/data.db' % os.path.dirname(os.path.abspath(__file__)))
       cur = self.db.execute("SELECT start, end FROM lap ORDER BY lap.start")
       all_laps = cur.fetchall()
       self.last_lap_time, self.fastest_lap_time = self.laptimer.loadHistory(all_laps)
@@ -44,7 +45,7 @@ class DataRecordThread(QtCore.QThread):
       self.last_sector_start = 0
       self.lap_start_time = 0
 
-      self.db = sqlite3.connect('data.db')
+      self.db = sqlite3.connect('%s/data.db' % os.path.dirnam(os.path.abspath(__file__)))
       cur = self.db.cursor()
 
       cur.execute("INSERT INTO round(start, video) values(%s, %s)" % (
@@ -56,7 +57,7 @@ class DataRecordThread(QtCore.QThread):
       while True:
          point_datetime_obj = datetime.utcnow()
          point_datetime = (point_datetime_obj - datetime(1970, 1, 1)).total_seconds()
-         elapsed_time = (point_datetime - self.mainWin.start_datetime).total_seconds()
+         elapsed_time = (point_datetime_obj - self.mainWin.start_datetime).total_seconds()
 
          insert_query = ("INSERT INTO data("
             "id_round, datetime, elapsed_time, "
@@ -156,32 +157,32 @@ class MultiWiiThread(QtCore.QThread):
                 self.serialMultiWii.close()
                 break
 
-        str = self.serialMultiWii.readline()
-        parts = str.replace("\n", "").split(", ")
-        if len(parts) == 19:
-            data = {
-                "altitude": parts[0],
-                "latitude": parts[1],
-                "longitude": parts[2],
-                "heading": parts[3],
-                "speed": parts[4],
-                "gforce_x": parts[5],
-                "gforce_y": parts[6],
-                "gforce_z": parts[7],
-                "xAngle": parts[8],
-                "yAngle": parts[9],
-                "zAngle": parts[10],
-                "hx": parts[11],
-                "hy": parts[12],
-                "hz": parts[13],
-                "temperature": parts[14],
-                "temp_bmp": parts[15],
-                "pressure": parts[16],
-                "rpm": parts[17],
-                "gear": parts[18]
-            }
+            str = self.serialMultiWii.readline()
+            parts = str.replace("\n", "").split(", ")
+            if len(parts) == 19:
+               data = {
+                   "altitude": parts[0],
+                   "latitude": parts[1],
+                   "longitude": parts[2],
+                   "heading": parts[3],
+                   "speed": parts[4],
+                   "gforce_x": parts[5],
+                   "gforce_y": parts[6],
+                   "gforce_z": parts[7],
+                   "xAngle": parts[8],
+                   "yAngle": parts[9],
+                   "zAngle": parts[10],
+                   "hx": parts[11],
+                   "hy": parts[12],
+                   "hz": parts[13],
+                   "temperature": parts[14],
+                   "temp_bmp": parts[15],
+                   "pressure": parts[16],
+                   "rpm": parts[17],
+                   "gear": parts[18]
+               }
             
-            self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+               self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
 
     def setPort(self, port):
         self.MultiWiiSerial = port

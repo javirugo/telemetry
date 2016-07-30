@@ -205,6 +205,7 @@ void HMC5883Read()
     heading += 2 * M_PI;
   }
 
+  heading = heading * 180/M_PI;
 }
 
 void BMP085Init()
@@ -325,9 +326,9 @@ void loop()
    }
    else
    {
-      #unsigned long elapsed_millis = (millis() - start_millis);
-      #Serial.print((elapsed_millis / 1000)); Serial.print(".");
-      #Serial.print((elapsed_millis % 1000)); Serial.print(", ");
+      //unsigned long elapsed_millis = (millis() - start_millis);
+      //Serial.print((elapsed_millis / 1000)); Serial.print(".");
+      //#Serial.print((elapsed_millis % 1000)); Serial.print(", ");
       Serial.print(altitude, 6); Serial.print(", ");
       Serial.print(latitude, 6); Serial.print(", ");
       Serial.print(longitude, 6); Serial.print(", ");
