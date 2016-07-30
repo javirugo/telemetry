@@ -159,7 +159,7 @@ class MainWindow(QtGui.QMainWindow):
       self.gyros_y = float(data["hy"])
       self.gyros_z = float(data["hz"])
       self.gyros_temperature = int(data["temperature"])
-      self.baro_temperature = int(data["temp_bmp"])
+      self.baro_temperature = int(data["temp_bmp"]) / 10
       self.baro_pressure = int(data["pressure"])
       self.rpm = int(data["rpm"])
       self.gear = int(data["gear"])

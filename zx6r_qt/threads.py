@@ -45,7 +45,7 @@ class DataRecordThread(QtCore.QThread):
       self.last_sector_start = 0
       self.lap_start_time = 0
 
-      self.db = sqlite3.connect('%s/data.db' % os.path.dirnam(os.path.abspath(__file__)))
+      self.db = sqlite3.connect('%s/data.db' % os.path.dirname(os.path.abspath(__file__)))
       cur = self.db.cursor()
 
       cur.execute("INSERT INTO round(start, video) values(%s, %s)" % (
@@ -144,45 +144,49 @@ class MultiWiiThread(QtCore.QThread):
     def run(self):
         self.stopped = 0
 
-        self.serialMultiWii = serial.Serial(
-            port = self.MultiWiiSerial,
-            baudrate = 115200,
-            parity = serial.PARITY_NONE,
-            stopbits = serial.STOPBITS_ONE,
-            bytesize = serial.EIGHTBITS,
-            timeout = None)
+	try:
+            self.serialMultiWii = serial.Serial(
+                port = self.MultiWiiSerial,
+                baudrate = 115200,
+                parity = serial.PARITY_NONE,
+                stopbits = serial.STOPBITS_ONE,
+                bytesize = serial.EIGHTBITS,
+                timeout = None)
 
-        while True:
-            if self.stopped:
-                self.serialMultiWii.close()
-                break
+            while True:
+                if self.stopped:
+                    self.serialMultiWii.close()
+                    break
 
-            str = self.serialMultiWii.readline()
-            parts = str.replace("\n", "").split(", ")
-            if len(parts) == 19:
-               data = {
-                   "altitude": parts[0],
-                   "latitude": parts[1],
-                   "longitude": parts[2],
-                   "heading": parts[3],
-                   "speed": parts[4],
-                   "gforce_x": parts[5],
-                   "gforce_y": parts[6],
-                   "gforce_z": parts[7],
-                   "xAngle": parts[8],
-                   "yAngle": parts[9],
-                   "zAngle": parts[10],
-                   "hx": parts[11],
-                   "hy": parts[12],
-                   "hz": parts[13],
-                   "temperature": parts[14],
-                   "temp_bmp": parts[15],
-                   "pressure": parts[16],
-                   "rpm": parts[17],
-                   "gear": parts[18]
-               }
+                str = self.serialMultiWii.readline()
+                parts = str.replace("\n", "").split(", ")
+                if len(parts) == 19:
+                   data = {
+                       "altitude": parts[0],
+                       "latitude": parts[1],
+                       "longitude": parts[2],
+                       "heading": parts[3],
+                       "speed": parts[4],
+                       "gforce_x": parts[5],
+                       "gforce_y": parts[6],
+                       "gforce_z": parts[7],
+                       "xAngle": parts[8],
+                       "yAngle": parts[9],
+                       "zAngle": parts[10],
+                       "hx": parts[11],
+                       "hy": parts[12],
+                       "hz": parts[13],
+                       "temperature": parts[14],
+                       "temp_bmp": parts[15],
+                       "pressure": parts[16],
+                       "rpm": parts[17],
+                       "gear": parts[18]
+                   }
             
-               self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+                   self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
+
+	except:
+            pass
 
     def setPort(self, port):
         self.MultiWiiSerial = port
