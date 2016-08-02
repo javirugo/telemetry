@@ -168,9 +168,9 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the KDSThread when new data is received from KDS
    def updateMultiWii(self, data):
-      self.altitude = float(data["altitude"])
-      self.latitude = float(data["latitude"])
-      self.longitude = float(data["longitude"])
+      #self.altitude = float(data["altitude"])
+      #self.latitude = float(data["latitude"])
+      #self.longitude = float(data["longitude"])
       self.compass = float(data["heading"])
       self.speed = int(data["speed"])
       self.accel_gforce_x = float(data["gforce_x"])
@@ -202,14 +202,14 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the GPSThread when new data is received from GPS
    def updateGPS(self, data):
-      self.bt_latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
-      self.bt_longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
-      self.bt_speed = 0 if math.isnan(data["speed"]) else data["speed"]
+      self.latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
+      self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
+      self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
 
       if self.ui.pbLiveStatus.isChecked():
-         self.ui.labelStatus_lat.setText(str(self.bt_latitude))
-         self.ui.labelStatus_lon.setText(str(self.bt_longitude))
-         self.ui.labelStatus_speed.setText("%s kph" % str(self.bt_speed))
+         self.ui.labelStatus_lat.setText(str(self.latitude))
+         self.ui.labelStatus_lon.setText(str(self.longitude))
+         self.ui.labelStatus_speed.setText("%s kph" % str(self.speed))
 
 
    # Issued when the record button is pressed

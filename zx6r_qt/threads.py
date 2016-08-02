@@ -49,7 +49,7 @@ class DataRecordThread(QtCore.QThread):
 
          insert_query = ("INSERT INTO data("
             "id_round, datetime, elapsed_time, "
-            "altitude, latitude, longitude, speed, bt_latitude, bt_longitude, bt_speed,"
+            "altitude, latitude, longitude, speed, "
             "rpm, gear, "
             "accel_angle_x, accel_angle_y, accel_angle_z, accel_gforce_x, accel_gforce_y, accel_gforce_z, "
             "gyros_x, gyros_y, gyros_z, gyros_temperature, "
@@ -57,7 +57,6 @@ class DataRecordThread(QtCore.QThread):
             "VALUES(%s, %.3f, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
                current_round_id, point_datetime, elapsed_time,
                self.mainWin.altitude, self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
-               self.mainWin.bt_latitude, self.mainWin.bt_longitude, self.mainWin.bt_speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
                self.mainWin.accel_angle_x, self.mainWin.accel_angle_y, self.mainWin.accel_angle_z,
                self.mainWin.accel_gforce_x, self.mainWin.accel_gforce_y, self.mainWin.accel_gforce_z,
@@ -66,11 +65,11 @@ class DataRecordThread(QtCore.QThread):
 
          cur.execute(insert_query)
 
-         checkpoint = self.laptimer.check(self.mainWin.bt_latitude, self.mainWin.bt_longitude)
+         checkpoint = self.laptimer.check(self.mainWin.latitude, self.mainWin.longitude)
          if checkpoint:
 
             if (point_datetime - float(self.last_sector_start)) < 10: continue
-            
+
             # Set ending time of last sector
             if self.last_lap_id:
                cur.execute("UPDATE sector SET end=%.3f WHERE id_lap=%s and start=%s" %(
@@ -133,7 +132,7 @@ class DataRecordThread(QtCore.QThread):
                "best": self.fastest_lap_time})
 
       self.db.close()
-   
+
 
    def stop(self):
       self.stopped = 1
@@ -168,11 +167,8 @@ class MultiWiiThread(QtCore.QThread):
 
                 str = self.serialMultiWii.readline()
                 parts = str.replace("\n", "").split(", ")
-                if len(parts) == 19:
+                if len(parts) == 16:
                    data = {
-                       "altitude": parts[0],
-                       "latitude": parts[1],
-                       "longitude": parts[2],
                        "heading": parts[3],
                        "speed": parts[4],
                        "gforce_x": parts[5],
@@ -190,7 +186,7 @@ class MultiWiiThread(QtCore.QThread):
                        "rpm": parts[17],
                        "gear": parts[18]
                    }
-            
+
                    self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
         except:
             pass

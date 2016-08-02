@@ -13,11 +13,13 @@ String logfile;
 unsigned long kds_millis;
 KDSPort KDSThread(16, 17);
 
+/*
 // GPS
 #include "Ublox.h"
 #define SERIAL_BAUD 115200
 #define M8N_BAUD 57600
 Ublox M8_Gps;
+*/
 
 // BMA180 (Accel)
 #include <Wire.h>
@@ -313,7 +315,7 @@ void setup()
 
 void loop()
 {
-   GPSRead();
+   //GPSRead();
    AccelerometerRead();
    GyroscopeRead();
    BMP085Read();
@@ -329,9 +331,9 @@ void loop()
       //unsigned long elapsed_millis = (millis() - start_millis);
       //Serial.print((elapsed_millis / 1000)); Serial.print(".");
       //#Serial.print((elapsed_millis % 1000)); Serial.print(", ");
-      Serial.print(altitude, 6); Serial.print(", ");
-      Serial.print(latitude, 6); Serial.print(", ");
-      Serial.print(longitude, 6); Serial.print(", ");
+      //Serial.print(altitude, 6); Serial.print(", ");
+      //Serial.print(latitude, 6); Serial.print(", ");
+      //Serial.print(longitude, 6); Serial.print(", ");
       Serial.print(heading); Serial.print(", ");
       Serial.print(speed, 0); Serial.print(", ");
       Serial.print(gforce_x); Serial.print(", ");
