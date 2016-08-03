@@ -15,19 +15,12 @@ if useMock:
 else:
    from threads import MultiWiiThread, GPSThread, DataRecordThread
 
-settings = {
-  "start_raspi": "/picam/start.sh",
-  "picam_home": "/picam",
-  "KDSSerialPort": "/dev/ttyMultiWii"
-}
-
 
 class MainWindow(QtGui.QMainWindow):
 
-   def __init__(self, settings):
+   def __init__(self):
       super(MainWindow, self).__init__()
       self.recording = False
-      self.settings = settings
       self.process = QtCore.QProcess(self)
       self.ui = mainwindow.Ui_MainWindow()
       self.ui.setupUi(self)
@@ -232,7 +225,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
 app = QtGui.QApplication(sys.argv)
-my_mainWindow = MainWindow(settings)
+my_mainWindow = MainWindow()
 
 QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
 my_mainWindow.showFullScreen()
