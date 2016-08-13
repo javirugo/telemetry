@@ -143,53 +143,56 @@ class DataRecordThread(QtCore.QThread):
 
 
 class MultiWiiThread(QtCore.QThread):
-    def __init__(self, MultiWiiSerial = '/dev/ttyMultiWii'):
+    def __init__(self):
         QtCore.QThread.__init__(self)
         self.stopped = 1
-        self.MultiWiiSerial = MultiWiiSerial
+        self.serialMultiWii = False
+        self.MultiWiiSerial = "/dev/ttyMultiWii"
 
     def run(self):
         self.stopped = 0
+        self.serialMultiWii = serial.Serial(
+            port = self.MultiWiiSerial,
+            baudrate = 115200,
+            parity = serial.PARITY_NONE,
+            stopbits = serial.STOPBITS_ONE,
+            bytesize = serial.EIGHTBITS,
+            timeout = None)
 
-        try:
-            self.serialMultiWii = serial.Serial(
-                port = self.MultiWiiSerial,
-                baudrate = 115200,
-                parity = serial.PARITY_NONE,
-                stopbits = serial.STOPBITS_ONE,
-                bytesize = serial.EIGHTBITS,
-                timeout = None)
+        while True:
+            if self.stopped:
+                self.serialMultiWii.close()
+                break
 
-            while True:
-                if self.stopped:
-                    self.serialMultiWii.close()
-                    break
-
+            try:
                 str = self.serialMultiWii.readline()
                 parts = str.replace("\n", "").split(", ")
                 if len(parts) == 16:
                    data = {
-                       "heading": parts[3],
-                       "speed": parts[4],
-                       "gforce_x": parts[5],
-                       "gforce_y": parts[6],
-                       "gforce_z": parts[7],
-                       "xAngle": parts[8],
-                       "yAngle": parts[9],
-                       "zAngle": parts[10],
-                       "hx": parts[11],
-                       "hy": parts[12],
-                       "hz": parts[13],
-                       "temperature": parts[14],
-                       "temp_bmp": parts[15],
-                       "pressure": parts[16],
-                       "rpm": parts[17],
-                       "gear": parts[18]
+                       "heading": parts[0],
+                       "speed": parts[1],
+                       "gforce_x": parts[2],
+                       "gforce_y": parts[3],
+                       "gforce_z": parts[4],
+                       "xAngle": parts[5],
+                       "yAngle": parts[6],
+                       "zAngle": parts[7],
+                       "hx": parts[8],
+                       "hy": parts[9],
+                       "hz": parts[10],
+                       "temperature": parts[11],
+                       "temp_bmp": parts[12],
+                       "pressure": parts[13],
+                       "rpm": parts[14],
+                       "gear": parts[15]
                    }
 
                    self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )
-        except:
-            pass
+            except Exception, e:
+                print e
+                pass
+
+            #time.sleep(0.05)
 
     def setPort(self, port):
         self.MultiWiiSerial = port
