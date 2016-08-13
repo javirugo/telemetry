@@ -192,8 +192,6 @@ class MultiWiiThread(QtCore.QThread):
                 print e
                 pass
 
-            #time.sleep(0.05)
-
     def setPort(self, port):
         self.MultiWiiSerial = port
 
@@ -210,7 +208,7 @@ class GPSThread(QtCore.QThread):
       self.stopped = 1
 
    def run(self):
-      self.gpsd = gps(mode=WATCH_ENABLE)
+      self.gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
       self.stopped = 0
 
       latitude = 0
@@ -223,6 +221,7 @@ class GPSThread(QtCore.QThread):
 
          self.gpsd.next()
          data = {
+            "altitude": self.gpsd.fix.altitude,
             "latitude": self.gpsd.fix.latitude,
             "longitude": self.gpsd.fix.longitude,
             "speed": self.gpsd.fix.speed

@@ -1,6 +1,8 @@
 // Debug mode?
 #define _DEBUG true
 
+#define SERIAL_BAUD 115200
+
 // SD
 #include <SPI.h>
 #include <SD.h>
@@ -16,7 +18,6 @@ KDSPort KDSThread(16, 17);
 /*
 // GPS
 #include "Ublox.h"
-#define SERIAL_BAUD 115200
 #define M8N_BAUD 57600
 Ublox M8_Gps;
 */
@@ -223,6 +224,7 @@ void BMP085Read()
 }
 
 
+/*
 void GPSRead()
 {
    if (!Serial1.available()) return;
@@ -238,6 +240,7 @@ void GPSRead()
       }
    }
 }
+*/
 
 void SDInit()
 {
@@ -301,7 +304,7 @@ void setup()
    if (_DEBUG) Serial.begin(SERIAL_BAUD);
    else SDInit();
 
-   Serial1.begin(M8N_BAUD);
+   // Serial1.begin(M8N_BAUD);
    Wire.begin();
 
    AccelerometerInit();
