@@ -79,14 +79,17 @@ class MainWindow(QtGui.QMainWindow):
       self.gyros_correction = 0
       self.accel_correction = 0
 
+
    # If anything goes wrong, click the "reboot" button! 
    # https://www.youtube.com/watch?v=PtXtIivRRKQ
    def reboot(self):
+      if self.recording: self.switchRecording()
       os.system("sudo reboot")
 
 
    # For safeness, shutdown with a button
    def shutdown(self):
+      if self.recording: self.switchRecording()
       os.system("sudo shutdown -h now")
 
 

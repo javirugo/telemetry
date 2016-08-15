@@ -48,14 +48,14 @@ class DataRecordThread(QtCore.QThread):
          elapsed_time = (point_datetime_obj - self.mainWin.start_datetime).total_seconds()
 
          insert_query = ("INSERT INTO data("
-            "id_round, datetime, elapsed_time, "
+            "id_round, id_lap, datetime, elapsed_time, "
             "altitude, latitude, longitude, speed, "
             "rpm, gear, "
             "accel_angle_x, accel_angle_y, accel_angle_z, accel_gforce_x, accel_gforce_y, accel_gforce_z, "
             "gyros_x, gyros_y, gyros_z, gyros_temperature, "
             "compass, baro_temperature, baro_pressure) "
-            "VALUES(%s, %.3f, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
-               current_round_id, point_datetime, elapsed_time,
+            "VALUES(%s, %s, %.3f, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+               current_round_id, self.last_lap_id, point_datetime, elapsed_time,
                self.mainWin.altitude, self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
                self.mainWin.accel_angle_x, self.mainWin.accel_angle_y, self.mainWin.accel_angle_z,
