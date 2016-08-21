@@ -50,13 +50,23 @@ class DataRecordThread(QtCore.QThread):
          insert_query = ("INSERT INTO data("
             "id_round, id_lap, datetime, elapsed_time, "
             "altitude, latitude, longitude, speed, "
+            "wii_altitude, wii_latitude, wii_longitude, wii_speed, "
             "rpm, gear, "
             "accel_angle_x, accel_angle_y, accel_angle_z, accel_gforce_x, accel_gforce_y, accel_gforce_z, "
             "gyros_x, gyros_y, gyros_z, gyros_temperature, "
             "compass, baro_temperature, baro_pressure) "
-            "VALUES(%s, %s, %.3f, %.3f, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+            "VALUES("
+               "%s, %s, %.3f, %.3f, "
+               "%s, %s, %s, %s, "
+               "%s, %s, %s, %s, "
+               "%s, %s, "
+               "%s, %s, %s, "
+               "%s, %s, %s, "
+               "%s, %s, %s, %s, "
+               "%s, %s, %s)" % (
                current_round_id, self.last_lap_id, point_datetime, elapsed_time,
                self.mainWin.altitude, self.mainWin.latitude, self.mainWin.longitude, self.mainWin.speed,
+               self.mainWin.wii_altitude, self.mainWin.wii_latitude, self.mainWin.wii_longitude, self.mainWin.wii_speed,
                int(self.mainWin.rpm), int(self.mainWin.gear),
                self.mainWin.accel_angle_x, self.mainWin.accel_angle_y, self.mainWin.accel_angle_z,
                self.mainWin.accel_gforce_x, self.mainWin.accel_gforce_y, self.mainWin.accel_gforce_z,
@@ -167,24 +177,27 @@ class MultiWiiThread(QtCore.QThread):
             try:
                 str = self.serialMultiWii.readline()
                 parts = str.replace("\n", "").split(", ")
-                if len(parts) == 16:
+                if len(parts) == 19:
                    data = {
-                       "heading": parts[0],
-                       "speed": parts[1],
-                       "gforce_x": parts[2],
-                       "gforce_y": parts[3],
-                       "gforce_z": parts[4],
-                       "xAngle": parts[5],
-                       "yAngle": parts[6],
-                       "zAngle": parts[7],
-                       "hx": parts[8],
-                       "hy": parts[9],
-                       "hz": parts[10],
-                       "temperature": parts[11],
-                       "temp_bmp": parts[12],
-                       "pressure": parts[13],
-                       "rpm": parts[14],
-                       "gear": parts[15]
+                       "altitude": parts[0],
+                       "latitude": parts[1],
+                       "longitude": parts[2],
+                       "heading": parts[3],
+                       "speed": parts[4],
+                       "gforce_x": parts[5],
+                       "gforce_y": parts[6],
+                       "gforce_z": parts[7],
+                       "xAngle": parts[8],
+                       "yAngle": parts[9],
+                       "zAngle": parts[10],
+                       "hx": parts[11],
+                       "hy": parts[12],
+                       "hz": parts[13],
+                       "temperature": parts[14],
+                       "temp_bmp": parts[15],
+                       "pressure": parts[16],
+                       "rpm": parts[17],
+                       "gear": parts[18]
                    }
 
                    self.emit( QtCore.SIGNAL('update(PyQt_PyObject)'), data )

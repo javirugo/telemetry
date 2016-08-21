@@ -52,10 +52,10 @@ class MainWindow(QtGui.QMainWindow):
       self.current_round_id = 0
 
       self.elapsed_time = False
-      self.bt_altitude = 0
-      self.bt_latitude = 0
-      self.bt_longitude = 0
-      self.bt_speed = 0
+      self.wii_altitude = 0
+      self.wii_latitude = 0
+      self.wii_longitude = 0
+      self.wii_speed = 0
       self.altitude = 0
       self.latitude = 0
       self.longitude = 0
@@ -76,8 +76,8 @@ class MainWindow(QtGui.QMainWindow):
       self.baro_temperature = 0
       self.baro_pressure = 0
 
-      self.gyros_correction = 0
-      self.accel_correction = 0
+      self.gyros_correction = -5.7
+      self.accel_correction = 0.20 #-0.21
 
 
    # If anything goes wrong, click the "reboot" button! 
@@ -164,15 +164,15 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the KDSThread when new data is received from KDS
    def updateMultiWii(self, data):
-      #self.altitude = float(data["altitude"])
-      #self.latitude = float(data["latitude"])
-      #self.longitude = float(data["longitude"])
+      self.wii_altitude = float(data["altitude"])
+      self.wii_latitude = float(data["latitude"])
+      self.wii_longitude = float(data["longitude"])
+      self.wii_speed = int(data["speed"])
       self.compass = float(data["heading"])
-      self.speed = int(data["speed"])
       self.accel_gforce_x = float(data["gforce_x"])
-      self.accel_gforce_y = float(data["gforce_y"])
+      self.accel_gforce_y = float(data["gforce_y"]) + self.accel_correction
       self.accel_gforce_z = float(data["gforce_z"])
-      self.accel_angle_x = float(data["xAngle"])
+      self.accel_angle_x = float(data["xAngle"]) + self.gyros_correction
       self.accel_angle_y = float(data["yAngle"])
       self.accel_angle_z = float(data["zAngle"])
       self.gyros_x = float(data["hx"])
@@ -190,7 +190,7 @@ class MainWindow(QtGui.QMainWindow):
          self.ui.progressBarRPM.setValue(self.rpm)
          self.ui.dialLean.setValue((self.accel_angle_x * -1) + 180)
          self.ui.labelStatus_gyros.setText(str(self.accel_angle_x))
-         self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2) - self.accel_correction))
+         self.ui.labelStatus_accelerometer.setText(str(round(self.accel_gforce_y, 2)))
          self.ui.labelStatus_heading.setText(str(round(self.compass, 4)))
          self.ui.labelStatus_temperature.setText(str(round(self.gyros_temperature, 0)))
          self.ui.labelStatus_pressure.setText(str(self.baro_pressure))
@@ -198,6 +198,7 @@ class MainWindow(QtGui.QMainWindow):
 
    # Called from the GPSThread when new data is received from GPS
    def updateGPS(self, data):
+      self.altitude = 0 if math.isnan(data["altitude"]) else data["altitude"]
       self.latitude = 0 if math.isnan(data["latitude"]) else data["latitude"]
       self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
       self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
