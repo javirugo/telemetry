@@ -5,6 +5,11 @@
 unsigned long kds_millis;
 KDSPort KDSThread(16, 17);
 
+// GPS
+#include "Ublox.h"
+#define M8N_BAUD 115200
+Ublox M8_Gps;
+
 // BMA180 (Accel)
 #include <Wire.h>
 #define BMA180 0x40  //address of the accelerometer
@@ -28,9 +33,21 @@ int g_offx = 120;
 int g_offy = 20;
 int g_offz = 93;
 
+// BMP065 (barometer)
+#include <BMP085.h>
+BMP085 bmp085 = BMP085();
+
+// HMC5883 (compass)
+#include <HMC58X3.h>
+HMC58X3 magnetometer;
 
 // Data variables
 unsigned long start_millis;
+float altitude = 0;
+long altitude_bmp = 0;
+float latitude = 0;
+float longitude = 0;
+float speed = 0;
 float gforce_x = 0;
 float gforce_y = 0;
 float gforce_z = 0;
@@ -40,6 +57,10 @@ float zAngle = 0;
 int hx = 0;
 int hy = 0;
 int hz = 0;
+int temperature = 0;
+long temp_bmp = 0;
+long pressure = 0;
+float heading = 0;
 
 void initGyro()
 {
@@ -65,17 +86,19 @@ void GyroscopeRead()
    /**************************************
    Gyro ITG-3200 I2C
    registers:
+   temp MSB = 1B, temp LSB = 1C
    x axis MSB = 1D, x axis LSB = 1E
    y axis MSB = 1F, y axis LSB = 20
    z axis MSB = 21, z axis LSB = 22
    *************************************/
    int regAddress = 0x1B;
-   int x, y, z;
+   int temp, x, y, z;
    byte buff[G_TO_READ];
    readFrom(GYRO, regAddress, G_TO_READ, buff); //read the gyro data from the ITG3200
    hx = (((buff[2] << 8) | buff[3]) + g_offx) / 14.375;
    hy = (((buff[4] << 8) | buff[5]) + g_offy) / 14.375;
    hz = (((buff[6] << 8) | buff[7]) + g_offz) / 14.375;
+   temperature = 35+ ((double) (((buff[0] << 8) | buff[1]) + 13200)) / 280; // temperature
 }
 
 
@@ -151,14 +174,72 @@ void readFrom(int DEVICE, byte address , int num ,byte buff[])
    Wire.endTransmission();         // end transmission
 }
 
+void HMC5883Init()
+{
+   // no delay needed as we have already a delay(5) in HMC5843::init()
+   magnetometer.init(false); // Dont set mode yet, we'll do that later on.
+   // Calibrate HMC using self test, not recommended to change the gain after calibration.
+   magnetometer.calibrate(1, 32); // Use gain 1=default, valid 0-7, 7 not recommended.
+   // Single mode conversion was used in calibration, now set continuous mode
+   magnetometer.setMode(0);
+}
+
+void HMC5883Read()
+{
+  int ix,iy,iz;
+  float fx,fy,fz;
+  magnetometer.getValues(&ix,&iy,&iz);
+  magnetometer.getValues(&fx,&fy,&fz);
+
+  heading = atan2(fy, fx);
+  if(heading < 0) {
+    heading += 2 * M_PI;
+  }
+
+  heading = heading * 180/M_PI;
+}
+
+void BMP085Init()
+{
+   bmp085.init();
+}
+
+void BMP085Read()
+{
+   bmp085.getPressure(&pressure);
+   bmp085.getAltitude(&altitude_bmp);
+   bmp085.getTemperature(&temp_bmp);
+}
+
+
+void GPSRead()
+{
+   if (!Serial1.available()) return;
+   while (Serial1.available())
+   {
+      char c = Serial1.read();
+      if (M8_Gps.encode(c))
+      {
+         altitude = M8_Gps.altitude;
+         latitude = M8_Gps.latitude;
+         longitude = M8_Gps.longitude; 
+         speed = M8_Gps.speed;
+      }
+   }
+}
+
 
 void setup()
 {
    Serial.begin(SERIAL_BAUD);
+
+   Serial1.begin(M8N_BAUD);
    Wire.begin();
 
    AccelerometerInit();
+   BMP085Init();
    initGyro();
+   HMC5883Init();
    start_millis = millis();
    kds_millis = start_millis;
 }
@@ -166,12 +247,22 @@ void setup()
 
 void loop()
 {
+   GPSRead();
    AccelerometerRead();
    GyroscopeRead();
+   BMP085Read();
+   HMC5883Read();
    if (KDSThread.loop(kds_millis)) kds_millis = millis();
 
-   Serial.print(KDSThread.getRPM()); Serial.print(", ");
-   Serial.print(KDSThread.getGear()); Serial.print(", ");
+   //unsigned long elapsed_millis = (millis() - start_millis);
+   //Serial.print((elapsed_millis / 1000)); Serial.print(".");
+   //Serial.print((elapsed_millis % 1000)); Serial.print(", ");
+
+   Serial.print(altitude, 6); Serial.print(", ");
+   Serial.print(latitude, 6); Serial.print(", ");
+   Serial.print(longitude, 6); Serial.print(", ");
+   Serial.print(heading); Serial.print(", ");
+   Serial.print(speed, 0); Serial.print(", ");
    Serial.print(gforce_x); Serial.print(", ");
    Serial.print(gforce_y); Serial.print(", ");
    Serial.print(gforce_z); Serial.print(", ");
@@ -180,7 +271,12 @@ void loop()
    Serial.print(zAngle); Serial.print(", ");
    Serial.print(hx); Serial.print(", ");
    Serial.print(hy); Serial.print(", ");
-   Serial.print(hz);
+   Serial.print(hz); Serial.print(", ");
+   Serial.print(temperature); Serial.print(", ");
+   Serial.print(temp_bmp); Serial.print(", ");
+   Serial.print(pressure); Serial.print(", ");
+   Serial.print(KDSThread.getRPM()); Serial.print(", ");
+   Serial.print(KDSThread.getGear());
    Serial.println("");
 
    delay(10);
