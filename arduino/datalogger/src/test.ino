@@ -7,7 +7,7 @@ KDSPort KDSThread(16, 17);
 
 // GPS
 #include "Ublox.h"
-#define M8N_BAUD 57600
+#define M8N_BAUD 115200
 Ublox M8_Gps;
 
 // BMA180 (Accel)
@@ -233,7 +233,7 @@ void setup()
 {
    Serial.begin(SERIAL_BAUD);
 
-   // Serial1.begin(M8N_BAUD);
+   Serial1.begin(M8N_BAUD);
    Wire.begin();
 
    AccelerometerInit();

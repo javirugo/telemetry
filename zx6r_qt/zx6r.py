@@ -25,6 +25,8 @@ class MainWindow(QtGui.QMainWindow):
       self.ui = mainwindow.Ui_MainWindow()
       self.ui.setupUi(self)
 
+      self.TRACK = "JEREZ"
+
       self.ui.tableLaps.setColumnCount(2)
       self.ui.tableLaps.setRowCount(0)
       self.ui.tableLaps.setSortingEnabled(False)
@@ -42,7 +44,7 @@ class MainWindow(QtGui.QMainWindow):
 
       self.MultiWiiThread = MultiWiiThread()
       self.connect( self.MultiWiiThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateMultiWii )
-      self.GPSThread = GPSThread()
+      self.GPSThread = GPSThread("/dev/ttyGPS")
       self.connect( self.GPSThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateGPS )
       self.DataRecordThread = DataRecordThread(self)
       self.connect( self.DataRecordThread, QtCore.SIGNAL("update(PyQt_PyObject)"), self.updateLaptimes )
