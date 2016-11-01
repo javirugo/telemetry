@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from mock_metrics import Metrics
-#from real_metrics import Metrics
+#from mock_metrics import Metrics
+from real_metrics import Metrics
 
 import json
 import time
@@ -32,9 +32,9 @@ SECTOR3_POLY = Polygon([
     (track_data["SECTOR3"]["lat1"], track_data["SECTOR3"]["lon1"])
 ])
 
-#metricsSource = Metrics("data_almeria_16jun.db")
-metricsSource = Metrics()
-metricsSource.setMockData(track_data["MOCK"])
+metricsSource = Metrics("/home/jaruiz/data.db")
+#metricsSource = Metrics()
+#metricsSource.setMockData(track_data["MOCK"])
 
 current_sector = 0
 current_lap = 0
