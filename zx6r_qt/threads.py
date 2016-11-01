@@ -17,7 +17,7 @@ class DataRecordThread(QtCore.QThread):
       QtCore.QThread.__init__(self)
       self.stopped = 1
       self.mainWin = mainwin
-      self.laptimer = Laptimer("%s/../tracks/JEREZ.json" % os.path.dirname(os.path.abspath(__file__)))
+      self.laptimer = Laptimer("%s/../tracks/%s.json" % (os.path.dirname(os.path.abspath(__file__)), self.mainWin.TRACK))
       self.last_lap_id = 0
       self.last_sector_idlap = 0
       self.last_sector_start = 0
@@ -216,9 +216,37 @@ class MultiWiiThread(QtCore.QThread):
 
 
 class GPSThread(QtCore.QThread):
-   def __init__(self):
+   def __init__(self, device):
       QtCore.QThread.__init__(self)
       self.stopped = 1
+      self.device = device
+
+      os.popen("sudo systemctl stop gpsd")
+      time.sleep(2)
+      ser = serial.Serial(self.device, self.get_baudrate())
+
+      # CFG-RATE (60 millis)
+      cmd_rate = b'\xB5\x62\x06\x08\x06\x00\x3C\x00\x01\x00\x01\x00\x52\x22'
+      ser.write(cmd_rate)
+
+      # CFG-PRT (UART-1 115200)
+      cmd_prt = b'\xB5\x62\x06\x00\x14\x00\x01\x00\x00\x00\xD0\x08\x00\x00\x00\xC2\x01\x00\x07\x00\x03\x00\x00\x00\x00\x00\xC0\x7E'
+      ser.write(cmd_prt)
+      ser.close()
+
+      os.popen("sudo systemctl restart gpsd")
+
+      
+
+   def get_baudrate(self):
+      baudrate = 9600
+      command = "stty < %s | grep speed | awk '{print $2}'" % self.device
+      baudrate_str = os.popen(command).read().rstrip()
+      if baudrate_str != "":
+         baudrate = int(baudrate_str)
+
+      return baudrate
+
 
    def run(self):
       self.gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
