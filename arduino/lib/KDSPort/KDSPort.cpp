@@ -243,12 +243,12 @@ bool KDSPort::loop(unsigned long start_millis)
       else
       {
          // Grab Gear
-	      for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
-	      cmdBuf[1] = 0x0B;
-	      respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
+         for (uint8_t i = 0; i < 4; i++) respBuf[i] = 0;
+         cmdBuf[1] = 0x0B;
+         respSize = sendRequest(cmdBuf, respBuf, cmdSize, 12);
 
-	      if (respSize == 3)
-	      {
+         if (respSize == 3)
+         {
             this->gear = respBuf[2];
          }
          else
