@@ -1,4 +1,32 @@
-when replacing Pi's box...
-   - attach battery charging cable
-   - new gps (improbe usb cable...)
-   - tape connections
+- A desktop or web app to keep track of everything:
+    - compare laps from different rounds, days, etc... on the same track
+
+QT App:
+ - Database:
+     - rounds, laps and so on... associated with tracks, so I ca keep storical laps per track
+     - Datetime for rounds and laps
+ - Change "status" tab for "live", and start/stop live data on focus/loose focus.
+ - Laps table should display rounds, dates, etc...
+ - autodetect track on gps data (like: make a big square on the track gps coordinates), show track name in UI
+ - SET DATETIME on gps info, notify on UI (show datetime and last sync with gps data)
+ - Remove: pressure, temperature, compass, and live button
+
+Laptimer:
+ - ensure that all lap counters include the check like "if time_since_last_chckpoint < 5seconds, continue"
+
+Arduino App:
+ - change gear gathering frequency from 8 to 4-5
+
+
+- Clear arduino code:
+    - remove libs not used
+    - remove test/old projects
+    - clean up documentation in code and in doc folder
+
+
+Wish:
+ - accelerator % sensor
+ - break sensor
+ - rear camera
+ - suspension sensors
+
