@@ -25,7 +25,8 @@ class MainWindow(QtGui.QMainWindow):
       self.ui = mainwindow.Ui_MainWindow()
       self.ui.setupUi(self)
 
-      self.TRACK = "JEREZ"
+      #self.TRACK = "JEREZ"
+      self.TRACK = "ALMERIA"
 
       self.ui.tableLaps.setColumnCount(2)
       self.ui.tableLaps.setRowCount(0)
@@ -37,7 +38,7 @@ class MainWindow(QtGui.QMainWindow):
       self.ui.pbReboot.clicked.connect(self.reboot)
       self.ui.pbShutdown.clicked.connect(self.shutdown)
       self.ui.pbRecord.setStyleSheet("background-color: #1EAC4B;")
-      self.ui.pbLiveStatus.clicked.connect(self.pollerControl)
+      self.ui.tabApplication.currentChanged.connect(self.pollerControl)
 
       self.ui.labelLastLapTime.setText("00:00.000")
       self.ui.labelBestLapTime.setText("00:00.000")
@@ -88,28 +89,14 @@ class MainWindow(QtGui.QMainWindow):
 
 
    # Called when needed... This controls that the pollers are started or stopped
-   # depending on the status of "recording" and liveStatus-pushbutton
-   def pollerControl(self, checkbox_status = False):
-      if self.ui.pbLiveStatus.isChecked() or self.recording:
+   # depending on the status of "recording" and liveStatus-tab
+   def pollerControl(self, tabIdx = False):
+      if tabIdx == 1 or self.recording:
          if not self.MultiWiiThread.isRunning(): self.MultiWiiThread.start()
          if not self.GPSThread.isRunning(): self.GPSThread.start()
       else:
          self.MultiWiiThread.stop()
          self.GPSThread.stop()
-
-      if not self.ui.pbLiveStatus.isChecked():
-         self.ui.progressBarRPM.setValue(0)
-         self.ui.dialLean.setValue(180)
-         self.ui.lcdRPM.display(0)
-         self.ui.lcdGear.display(0)
-         self.ui.labelStatus_lat.setText("latitude")
-         self.ui.labelStatus_lon.setText("longitude")
-         self.ui.labelStatus_speed.setText("speed")
-         self.ui.labelStatus_gyros.setText("degrees")
-         self.ui.labelStatus_accelerometer.setText("0 to 2 g")
-         self.ui.labelStatus_heading.setText("heading")
-         self.ui.labelStatus_temperature.setText("degrees C")
-         self.ui.labelStatus_pressure.setText("Pa")
 
 
    # Called from the DataRecordThread when a lap is finished
@@ -170,7 +157,7 @@ class MainWindow(QtGui.QMainWindow):
       self.gyros_y = float(data["hy"])
       self.gyros_z = float(data["hz"])
 
-      if self.ui.pbLiveStatus.isChecked():
+      if self.ui.tabApplication.currentIndex() == 1:
          self.ui.lcdRPM.display(self.rpm)
          self.ui.lcdGear.display(self.gear)
          self.ui.progressBarRPM.setValue(self.rpm)
@@ -186,7 +173,7 @@ class MainWindow(QtGui.QMainWindow):
       self.longitude = 0 if math.isnan(data["longitude"]) else data["longitude"]
       self.speed = 0 if math.isnan(data["speed"]) else data["speed"]
 
-      if self.ui.pbLiveStatus.isChecked():
+      if self.ui.tabApplication.currentIndex() == 1:
          self.ui.labelStatus_lat.setText(str(self.latitude))
          self.ui.labelStatus_lon.setText(str(self.longitude))
          self.ui.labelStatus_speed.setText("%s kph" % str(self.speed))
